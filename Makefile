@@ -1,15 +1,15 @@
-#
-# Makefile
-#
+.PHONY : fresh
 
-target :
-	gcc -Wall -g -o aStar main.c
-
+build :
+	mkdir bin
+	gcc -Wall -g -o bin/aStar main.c
 
 clean :
-	rm -f *.o
-	rm -rf aStar
+	rm -f bin/*.o
+	rm -rf bin/
 
 distclean : clean
-	rm -rf core
-	rm -rf *~
+	rm -rf bin/core
+	rm -rf bin/*~
+
+fresh : distclean build
