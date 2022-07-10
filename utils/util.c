@@ -31,6 +31,16 @@ void *util_calloc(unsigned int num, unsigned int size)
 }
 
 /*
+ *  realloc (with check) utility function
+ */
+void *util_realloc(void *ptr, unsigned int size)
+{
+  ptr=realloc(ptr, size);
+  util_check_m(ptr!=NULL, "memory reallocation failed!");
+  return ptr;
+}
+
+/*
  *  strdup (with check) utility function
  */
 char *util_strdup(char *src)

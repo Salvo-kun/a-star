@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include "queuePublic.h"
 #include "graph.h"
-#include "../LAIB12/Ex01/extension.h"
-
 
 /* function prototypes */
 void graph_bfs (graph_t *, vertex_t *);
@@ -47,33 +45,33 @@ int main (int argc, char *argv[]) {
     n = n->next;
   }
 
-  /* BFS count */
-  printf ("\n\nBFS count: ");
-  graph_attribute_init (g);
-  printf("%d\n\n", graph_bfs_count(g, src));
+  // /* BFS count */
+  // printf ("\n\nBFS count: ");
+  // graph_attribute_init (g);
+  // printf("%d\n\n", graph_bfs_count(g, src));
 
-  /* BFS distance */
-  printf ("BFS distance: ");
-  graph_attribute_init (g);
-  printf("%d\n\n", graph_bfs_distance(g, src));
+  // /* BFS distance */
+  // printf ("BFS distance: ");
+  // graph_attribute_init (g);
+  // printf("%d\n\n", graph_bfs_distance(g, src));
 
-  /* DFS type & depth */
-  printf ("DFS type & depth:\n");
-  graph_attribute_init (g);
-  int t, b, f, c, d;
-  t = b = f = c = d = 0;
-  graph_dfs_type(g, src, &t, &b, &f, &c, &d);
-  printf("Tree: %d\nBack: %d\nForward: %d\nCross: %d\nDepth: %d\n\n", t, b, f, c, d);
+  // /* DFS type & depth */
+  // printf ("DFS type & depth:\n");
+  // graph_attribute_init (g);
+  // int t, b, f, c, d;
+  // t = b = f = c = d = 0;
+  // graph_dfs_type(g, src, &t, &b, &f, &c, &d);
+  // printf("Tree: %d\nBack: %d\nForward: %d\nCross: %d\nDepth: %d\n\n", t, b, f, c, d);
 
-  /* DFS Hamiltonian */
-  printf("DFS Hamiltonian from vertex %d: \n", src->id);
-  graph_attribute_init (g);
-  int len = graph_dfs_r_max_path(g, src, 0, 0);
+  // /* DFS Hamiltonian */
+  // printf("DFS Hamiltonian from vertex %d: \n", src->id);
+  // graph_attribute_init (g);
+  // int len = graph_dfs_r_max_path(g, src, 0, 0);
 
-  if (len != 0)
-    printf("Path length: %d\n\n", len);
-  else
-    printf("Path length: not found\n\n");
+  // if (len != 0)
+  //   printf("Path length: %d\n\n", len);
+  // else
+  //   printf("Path length: not found\n\n");
 
   graph_dispose (g);
 
