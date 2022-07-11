@@ -9,6 +9,7 @@ enum { MIN_HEAP, MAX_HEAP };
 typedef struct node {
   void *data;
   int priority;
+  int key;
 } node_t;
 
 struct heap {
@@ -19,11 +20,11 @@ struct heap {
 };
 
 /* Private methods */
-extern int heap_compare(node_t a, node_t b, int type);
-extern int heap_heapify(heap_t *heap, int position);
-extern int heap_move_down(heap_t *heap, node_t node, int position);
-extern int heap_move_up(heap_t *heap, node_t node, int position);
-extern int swap(heap_t *heap, int a, int b);
+extern int heap_compare(node_t first_node, node_t second_node, int type);
+extern void heap_heapify(heap_t *heap, int position);
+extern void heap_move_down(heap_t *heap, node_t node, int position);
+extern void heap_move_up(heap_t *heap, node_t node, int position);
+extern void heap_swap(heap_t *heap, int first_pos, int second_pos);
 extern void heap_stats(heap_t *heap);
 
 #endif

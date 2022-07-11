@@ -55,3 +55,6 @@ dkms.conf
 materials/
 .vscode/
 bin/
+
+# Log files
+*.log
