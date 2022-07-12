@@ -4,9 +4,7 @@
 #include <stdio.h>
 
 // Macro definitions
-#define LEFT(i) (2*i+1)
-#define RIGHT(i) (2*i+2)
-#define PARENT(i) ((i-1)/2)
+#define heap_is_empty(heap) (heap_count(heap) == 0)
 
 // Type declarations
 typedef struct heap heap_t;
@@ -14,33 +12,49 @@ typedef struct heap heap_t;
 // Function prototypes
 
 /*
-  Creates and return an heap, of a given type (0 if MIN_HEAP, otherwise MAX_HEAP)
+  Creates an heap, of a given type (0 if MIN_HEAP, otherwise MAX_HEAP).
+  Returns NULL if an error occurs, the heap pointer otherwise.
 */
 extern heap_t *heap_create(int type);
 
 /*
-  Insert a new element inside the heap with the given priority
+  Insert a new element inside the heap with the given priority.
+  Returns 0 if an error occurs, 1 otherwise.
 */
-extern void heap_insert(heap_t *heap, int key, void *data, int priority);
+extern int heap_insert(heap_t *heap, int key, void *data, int priority);
 
 /*
-  Returns the position of a node inside the heap given its key. If no position is found, returns -1
+  Finds the position of a node inside the heap given its key. If no position is found, it is set to NULL.
+  Returns 0 if an error occurs, 1 otherwise.
 */
-extern int heap_find(heap_t *heap, int key);
+extern int heap_find(heap_t *heap, int key, int *position);
 
 /*
-  Extracts the root of the heap, returning its key. Additional data are returned through a pointer passed as parameter.
+  Returns the size of the heap.
 */
-extern int heap_extract(heap_t *heap, void **data);
+extern int heap_count(heap_t *heap);
 
 /*
-  Updates an entry of the heap, given its position
+  Extracts the root of the heap, returning its key and additional data through pointers passed as parameters.
+  Returns 0 if an error occurs, 1 otherwise.
 */
-extern void heap_update(heap_t *heap, int position, int newPriority);
+extern int heap_extract(heap_t *heap, void **data, int *key);
 
 /*
-  Frees the allocated memory for the given heap, eventually freeing also the contained data (if freeData is not NULL)
+  Updates an entry of the heap, given its position.
+  Returns 0 if an error occurs, 1 otherwise.
 */
-extern void heap_destroy(heap_t *heap, void (*freeData)(void *));
+extern int heap_update(heap_t *heap, int position, int newPriority);
+
+/*
+  Frees the allocated memory for the given heap, eventually freeing also the contained data (if freeData is not NULL).
+  Returns 0 if an error occurs, 1 otherwise.
+*/
+extern int heap_destroy(heap_t *heap, void (*freeData)(void *));
+
+/*
+  Print heap stats to the given file. Internal data are printed if printData is not NULL.
+*/
+extern void heap_stats(FILE *fp, heap_t *heap, void (*printData)(FILE *, void *));
 
 #endif

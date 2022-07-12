@@ -6,10 +6,30 @@
 #include <string.h>
 
 /* macro definition */
-#define util_check_m(expr, msg) \
-  if ( !(expr) ) { \
+#define util_check_m(expr, msg)          \
+  if (!(expr))                           \
+  {                                      \
     fprintf(stderr, "Error: %s\n", msg); \
-    exit(EXIT_FAILURE); \
+  }
+
+#define util_check_r(expr, msg, retVal)    \
+  if (!(expr))                             \
+  {                                        \
+    if (msg != NULL)                       \
+    {                                      \
+      fprintf(stderr, "Error: %s\n", msg); \
+    }                                      \
+    return retVal;                         \
+  }
+
+#define util_check_no_r(expr, msg)    \
+  if (!(expr))                             \
+  {                                        \
+    if (msg != NULL)                       \
+    {                                      \
+      fprintf(stderr, "Error: %s\n", msg); \
+    }                                      \
+    return;                         \
   }
 
 /* extern function prototypes */

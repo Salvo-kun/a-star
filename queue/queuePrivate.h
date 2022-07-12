@@ -1,10 +1,10 @@
 #ifndef _QUEUE_PRIVATE
 #define _QUEUE_PRIVATE
 
-#include "util.h"
 #include "queuePublic.h"
+#include "../utils/util.h"
 
-/* structure declarations */
+// Data structures declaration
 typedef struct node {
   void *data;
   struct node *next;
@@ -13,7 +13,7 @@ typedef struct node {
 struct queue {
   node_t *head;
   node_t *tail;
-  int num;
+  int count;
 };
 
 #endif

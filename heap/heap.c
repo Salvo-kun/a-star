@@ -1,5 +1,4 @@
 #include "heapPrivate.h"
-#include "../utils/util.h"
 
 // Public Methods
 
@@ -9,29 +8,36 @@ heap_t *heap_create(int type)
 
   // Init the heap
   heap = (heap_t *)util_malloc(sizeof(heap_t));
+
+  // Could not allocate, return null
+  util_check_r(heap != NULL, "Heap cannot be null, returning...\n", NULL);
+
   heap->nodes = (node_t *)util_malloc(sizeof(node_t));
+
+  // Could not allocate, return null
+  util_check_r(heap->nodes != NULL, "Heap nodes cannot be null, returning...\n", NULL);
+
   heap->count = 0;
   heap->capacity = 1;
   heap->type = type == 0 ? MIN_HEAP : MAX_HEAP;
 
 #if DEBUG
   fprintf(stdout, "Created heap.\n");
-  heap_stats(heap);
 #endif
 
   return heap;
 }
 
-void heap_insert(heap_t *heap, int key, void *data, int priority)
+int heap_insert(heap_t *heap, int key, void *data, int priority)
 {
   node_t new_node;
 
   // Check heap and internal array are not null before starting
-  util_check_m(heap != NULL, "Heap cannot be null, terminating...\n");
-  util_check_m(heap->nodes != NULL, "Heap nodes cannot be null, terminating...\n");
+  util_check_r(heap != NULL, "Heap cannot be null, returning...\n", 0);
+  util_check_r(heap->nodes != NULL, "Heap nodes cannot be null, returning...\n", 0);
 
   // Check the given key is unique
-  util_check_m(heap_find(heap, key) == -1, "Key must be unique, terminating...\n");
+  util_check_r(!heap_find(heap, key, NULL), "Key must be unique, returning...\n", 0);
 
   // Init new node
   new_node.key = key;
@@ -40,10 +46,10 @@ void heap_insert(heap_t *heap, int key, void *data, int priority)
 
   // Increment heap size and realloc heap if full
   int position = heap->count++;
-  if (heap->count == heap->capacity)
+  if (heap->count >= (int)(FULL_FACTOR * heap->capacity))
   {
 #if DEBUG
-    fprintf(stdout, "Heap full, reallocating...\n");
+    fprintf(stdout, "Heap full at %d%%, reallocating...\n", (int)(FULL_FACTOR * 100));
 #endif
     heap->nodes = util_realloc(heap->nodes, 2 * (heap->capacity) * sizeof(node_t));
     heap->capacity *= 2;
@@ -53,34 +59,53 @@ void heap_insert(heap_t *heap, int key, void *data, int priority)
 #if DEBUG
   fprintf(stdout, "Inserting new node with key %d and priority %d...\n", key, priority);
 #endif
+
   heap_move_up(heap, new_node, position);
-#if DEBUG
-  heap_stats(heap);
-#endif
+
+  return 1;
 }
 
-int heap_find(heap_t *heap, int key)
+int heap_find(heap_t *heap, int key, int *position)
 {
   // Check heap is not null before starting
-  util_check_m(heap != NULL, "Heap cannot be null, terminating...\n");
-  util_check_m(heap->nodes != NULL, "Heap nodes cannot be null, terminating...\n");
+  util_check_r(heap != NULL, "Heap cannot be null, returning...\n", 0);
+  util_check_r(heap->nodes != NULL, "Heap nodes cannot be null, returning...\n", 0);
 
   for (int i = 0; i < heap->count; ++i)
   {
     if (heap->nodes[i].key == key)
-      return i;
+    {
+      if (position != NULL)
+      {
+        *position = i;
+      }
+
+      return 1;
+    }
   }
 
-  return -1;
+  return 0;
 }
 
-int heap_extract(heap_t *heap, void **data)
+int heap_count(heap_t *heap)
+{
+  // Check heap and internal array are not null before starting
+  util_check_r(heap != NULL, "Heap cannot be null, returning...\n", 0);
+  util_check_r(heap->nodes != NULL, "Heap nodes cannot be null, returning...\n", 0);
+
+  return heap->count;
+}
+
+int heap_extract(heap_t *heap, void **data, int *key)
 {
   node_t node;
 
   // Check heap and internal array are not null before starting
-  util_check_m(heap != NULL, "Heap cannot be null, terminating...\n");
-  util_check_m(heap->nodes != NULL, "Heap nodes cannot be null, terminating...\n");
+  util_check_r(heap != NULL, "Heap cannot be null, returning...\n", 0);
+  util_check_r(heap->nodes != NULL, "Heap nodes cannot be null, returning...\n", 0);
+
+  // Check internal array is not empty
+  util_check_r(!heap_is_empty(heap), "Heap nodes must be non-empty, returning...\n", 0);
 
 #if DEBUG
   fprintf(stdout, "Extracting root node with key %d and priority %d...\n", heap->nodes[0].key, heap->nodes[0].priority);
@@ -90,30 +115,36 @@ int heap_extract(heap_t *heap, void **data)
 
   // Decremwnt heap size and realloc heap if halved capacity is enough
   heap->count--;
-  if (heap->count * 2 == heap->capacity)
+  if (heap->count <= (int)(EMPTY_FACTOR * heap->capacity))
   {
 #if DEBUG
-    fprintf(stdout, "Heap half empty, reallocating...\n");
+    fprintf(stdout, "Heap empty at %d%%, reallocating...\n", (int)(EMPTY_FACTOR * 100));
 #endif
     heap->nodes = util_realloc(heap->nodes, (heap->count) * sizeof(node_t));
     heap->capacity /= 2;
   }
-  data = node.data;
+
+  if (data != NULL)
+    *data = node.data;
+
+  if (key != NULL)
+    *key = node.key;
 
   heap_heapify(heap, 0);
-#if DEBUG
-  heap_stats(heap);
-#endif
-  return node.key;
+
+  return 1;
 }
 
-void heap_update(heap_t *heap, int position, int newPriority)
+int heap_update(heap_t *heap, int position, int newPriority)
 {
   node_t old_node;
 
   // Check heap and internal array are not null before starting
-  util_check_m(heap != NULL, "Heap cannot be null, terminating...\n");
-  util_check_m(heap->nodes != NULL, "Heap nodes cannot be null, terminating...\n");
+  util_check_r(heap != NULL, "Heap cannot be null, returning...\n", 0);
+  util_check_r(heap->nodes != NULL, "Heap nodes cannot be null, returning...\n", 0);
+
+  // Check internal array is not empty
+  util_check_r(!heap_is_empty(heap), "Heap nodes must be non-empty, returning...\n", 0);
 
   // Init new node from the old one
   old_node = heap->nodes[position];
@@ -135,21 +166,17 @@ void heap_update(heap_t *heap, int position, int newPriority)
     heap_move_up(heap, new_node, position);
   }
 
-#if DEBUG
-  heap_stats(heap);
-#endif
+  return 1;
 }
 
-void heap_destroy(heap_t *heap, void (*freeData)(void *))
+int heap_destroy(heap_t *heap, void (*freeData)(void *))
 {
 #if DEBUG
   fprintf(stdout, "Freeing heap...\n");
 #endif
 
-  if (heap == NULL)
-  {
-    return;
-  }
+  // Check heap and internal array are not null before starting
+  util_check_r(heap != NULL, "Heap is already null, returning...\n", 0);
 
   if (heap->nodes != NULL)
   {
@@ -165,6 +192,34 @@ void heap_destroy(heap_t *heap, void (*freeData)(void *))
   }
 
   free(heap);
+  return 1;
+}
+
+void heap_stats(FILE *fp, heap_t *heap, void (*printData)(FILE *, void *))
+{
+  util_check_no_r(heap != NULL, "Heap cannot be null, returning...\n");
+  util_check_no_r(heap->nodes != NULL, "Heap nodes cannot be null, returning...\n");
+
+  fprintf(fp, "\n############## Heap Stats ##############\n\n");
+  fprintf(fp, "Type = %s\n", heap->type == 0 ? "MIN_HEAP" : "MAX_HEAP");
+  fprintf(fp, "Count = %d\n", heap->count);
+  fprintf(fp, "Capacity = %d\n", heap->capacity);
+
+  for (int i = 0; i < heap->count; ++i)
+  {
+    fprintf(fp, "Element %d)\n", i + 1);
+    fprintf(fp, "Key = %d\n", heap->nodes[i].key);
+
+    if (printData != NULL)
+    {
+      fprintf(fp, "Data: \n");
+      printData(fp, heap->nodes[i].data);
+    }
+
+    fprintf(fp, "\n");
+  }
+
+  fprintf(fp, "\n########################################\n\n");
 }
 
 // Private Methods
@@ -188,8 +243,8 @@ int heap_compare(node_t first_node, node_t second_node, int type)
 
 void heap_heapify(heap_t *heap, int position)
 {
-  util_check_m(heap != NULL, "Heap cannot be null, terminating...\n");
-  util_check_m(heap->nodes != NULL, "Heap nodes cannot be null, terminating...\n");
+  util_check_no_r(heap != NULL, "Heap cannot be null, returning...\n");
+  util_check_no_r(heap->nodes != NULL, "Heap nodes cannot be null, returning...\n");
 
   int l, r, first;
   l = LEFT(position);
@@ -212,8 +267,8 @@ void heap_heapify(heap_t *heap, int position)
 
 void heap_move_down(heap_t *heap, node_t node, int position)
 {
-  util_check_m(heap != NULL, "Heap cannot be null, terminating...\n");
-  util_check_m(heap->nodes != NULL, "Heap nodes cannot be null, terminating...\n");
+  util_check_no_r(heap != NULL, "Heap cannot be null, returning...\n");
+  util_check_no_r(heap->nodes != NULL, "Heap nodes cannot be null, returning...\n");
 
   // Insert node at the current position
   heap->nodes[position] = node;
@@ -224,8 +279,8 @@ void heap_move_down(heap_t *heap, node_t node, int position)
 
 void heap_move_up(heap_t *heap, node_t node, int position)
 {
-  util_check_m(heap != NULL, "Heap cannot be null, terminating...\n");
-  util_check_m(heap->nodes != NULL, "Heap nodes cannot be null, terminating...\n");
+  util_check_no_r(heap != NULL, "Heap cannot be null, returning...\n");
+  util_check_no_r(heap->nodes != NULL, "Heap nodes cannot be null, returning...\n");
 
   // Move nodes down the heap
   while (position >= 1 && heap_compare(heap->nodes[PARENT(position)], node, heap->type) > 0)
@@ -241,26 +296,11 @@ void heap_move_up(heap_t *heap, node_t node, int position)
 void heap_swap(heap_t *heap, int first_pos, int second_pos)
 {
   // Check heap is not null before starting
-  util_check_m(heap != NULL, "Heap cannot be null, terminating...\n");
-  util_check_m(heap->nodes != NULL, "Heap nodes cannot be null, terminating...\n");
+  util_check_no_r(heap != NULL, "Heap cannot be null, returning...\n");
+  util_check_no_r(heap->nodes != NULL, "Heap nodes cannot be null, returning...\n");
 
   // heap_swap a and b
   node_t temp = heap->nodes[second_pos];
   heap->nodes[second_pos] = heap->nodes[first_pos];
   heap->nodes[first_pos] = temp;
-}
-
-void heap_stats(heap_t *heap)
-{
-  util_check_m(heap != NULL, "Heap cannot be null, terminating...\n");
-  util_check_m(heap->nodes != NULL, "Heap nodes cannot be null, terminating...\n");
-
-  fprintf(stdout, "Heap Stats:\ttype = %s\tcount = %d\tcapacity = %d\tarray: ", heap->type == 0 ? "MIN_HEAP" : "MAX_HEAP", heap->count, heap->capacity);
-
-  for (int i = 0; i < heap->count; ++i)
-  {
-    fprintf(stdout, "%d ", heap->nodes[i].key);
-  }
-
-  fprintf(stdout, "\n");
 }
