@@ -1,62 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <math.h>
+#include "../hashTablePublic.h"
 
-#include "item.h"
-#include "st.h"
+int main(int argc, char **argv)
+{
+  hash_table_t *ht = hash_table_create(30);
 
-int mainHT () {
-  Item item;
-  Key k;
-  int i,  cont, maxN;
+  int newData[] = {11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
+  int *data;
 
-  printf("Input size of hash table to guarantee load factor < 1/2:");
-  scanf("%d", &maxN);
+  for (int i = 0; i < 10; ++i)
+  {
+    hash_table_insert(ht, i, (void *)(newData + i));
+    hash_table_stats(stdout, ht, NULL);
+  }
 
-  ST st = STinit(maxN);
-  cont = 1;
-  while(cont) {
-    printf("\nOperations on hash tables\n");
-    printf("===============\n");
-    printf("1.Insert\n");
-    printf("2.Search\n");
-    printf("3.Delete\n");
-    printf("4.Display\n");
-    printf("5.Exit\n");
-    printf("Enter your choice : ");
-    if(scanf("%d",&i)<=0) {
-      printf("Integers only!\n");
-      exit(0);
-    }
-    else {
-      switch(i) {
-                case 1:     printf("Enter item: \n");
-                            item = ITEMscan();
-                            if (ITEMcheckvoid(STsearch(st, KEYget(item))))
-                              STinsert(st, item);
-                            break;
-                case 2:     printf("Enter key: \n");
-                            k = KEYscan();
-                            if (ITEMcheckvoid(STsearch(st, k)))
-                              printf("data with given key not found!\n");
-                            else
-                              printf("data with given key found!\n");
-                            break;
-                case 3:     printf("Enter key: \n");
-                            k = KEYscan();
-                            if (ITEMcheckvoid(STsearch(st, k)))
-                              printf("data with given key not in symbol table!\n");
-                            else
-                              STdelete(st, k);
-                            break;
-                case 4:     STdisplay(st);
-                            break;
-                case 5:     cont = 0;
-                            break;
-                default:    printf("Invalid option\n");
-            }
-      }
-    }
-  return 0;
+  hash_table_get(ht, 5, (void **)&data);
+  *data = 100;
+  hash_table_update(ht, 5, data);
+  hash_table_stats(stdout, ht, NULL);
+  hash_table_delete(ht, 5);
+  hash_table_stats(stdout, ht, NULL);
+
+  hash_table_destroy(ht, NULL);
 }
