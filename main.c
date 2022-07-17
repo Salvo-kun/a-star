@@ -32,8 +32,7 @@ static struct argp_option options[] =
    PARSER. Field 2 in ARGP.
    Order of parameters: KEY, ARG, STATE.
 */
-static error_t
-parse_opt(int key, char *arg, struct argp_state *state)
+static error_t parse_opt(int key, char *arg, struct argp_state *state)
 {
   struct arguments *arguments = state->input;
 

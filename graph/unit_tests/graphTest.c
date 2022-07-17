@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "queuePublic.h"
-#include "graph.h"
+#include "../../queue/queuePublic.h"
+#include "../graph.h"
 
 /* function prototypes */
 void graph_bfs (graph_t *, vertex_t *);
@@ -86,7 +86,7 @@ void graph_bfs (graph_t *g, vertex_t *n) {
   vertex_t *d;
   edge_t *e;
 
-  qp = queue_init (g->nv);
+  qp = queue_create();
   n->color = GREY;
   n->dist = 0;
   n->pred = NULL;
@@ -107,7 +107,7 @@ void graph_bfs (graph_t *g, vertex_t *n) {
     }
     n->color = BLACK;
   }
-  queue_dispose (qp, NULL);
+  queue_destroy(qp, NULL);
 
   return;
 }

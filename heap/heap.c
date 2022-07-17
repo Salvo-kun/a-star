@@ -182,7 +182,7 @@ int heap_destroy(heap_t *heap, void (*freeData)(void *))
   fprintf(stdout, "Freeing heap...\n");
 #endif
 
-  // Check heap and internal array are not null before starting
+  // Check heap is not null before starting
   util_check_r(heap != NULL, "Heap is already null, returning...\n", 0);
 
   if (heap->nodes != NULL)

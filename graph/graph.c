@@ -1,166 +1,205 @@
 #include "graph.h"
 
-/* static function prototypes */
-static vertex_t *new_node (vertex_t *, int);
-static void new_edge (graph_t *, int, int, int);
+// Constants definition
+#define MAX_LINE 256
 
-/*
- *  load a graph from file: adjacency lists
- */
-graph_t *graph_load (char *filename) {
-  graph_t *g;
+// Static function prototypes
+static vertex_t *new_node(vertex_t *, int, void *);
+static void new_edge(graph_t *, vertex_t *, vertex_t *, int);
+
+graph_t *graph_load(char *filename, void *(*readData)(char *))
+{
+  graph_t *graph;
   char line[MAX_LINE];
-  int i, j, weight, dir;
+  int i, j, weight;
   FILE *fp;
 
-  g = (graph_t *) util_calloc (1, sizeof(graph_t));
+  // Allocate graph
+  graph = (graph_t *)util_malloc(sizeof(graph_t));
+
+  // Could not allocate, return null
+  util_check_r(graph != NULL, "Graph cannot be null, returning...\n", NULL);
 
   fp = util_fopen(filename, "r");
+
+  // Could not open file, return null
+  util_check_r(fp != NULL, "Could not open file, returning...\n", NULL);
+
   fgets(line, MAX_LINE, fp);
-  if (sscanf(line, "%d%d", &g->nv, &dir) != 2) {
-    sscanf(line, "%d", &g->nv);
-    dir = 1;
+
+  // Check first line format
+  util_check_r(sscanf(line, "%d%d", &graph->count, &graph->type) == 2, "First line has wrong format, returning...\n", NULL);
+  util_check_r(graph->type == UNDIRECTED || graph->type == DIRECTED, "Graph type can only be 0 or 1, returning...\n", NULL);
+
+  // Create nodes (data not empty only if readData != NULL)
+  for (i = 0; i < graph->count; ++i)
+  {
+    void *data = NULL;
+    int id = i;
+
+    if (readData != NULL)
+    {
+      // Reads line, scans id, reads additional data
+      fgets(line, MAX_LINE, fp);
+      sscanf(line, "%d", &id);
+      data = readData(line);
+    }
+
+    graph->head = new_node(graph->head, id, data);
   }
 
-  /* create initial structure for vertices */
-  for (i=g->nv-1; i>=0; i--) {
-    g->g = new_node (g->g, i);
+  // Create edges
+  while (fgets(line, MAX_LINE, fp) != NULL)
+  {
+
+    // Check edge lines format
+    util_check_r(sscanf(line, "%d%d%d", &i, &j, &weight) == 3, "Edge line has wrong format, returning...\n", NULL);
+
+    // Create edge
+    vertex_t *src, *dst;
+    graph_find(graph, i, &src);
+    graph_find(graph, j, &dst);
+    new_edge(graph, src, dst, weight);
+
+    // If undirected, create also reverse direction edge
+    if (graph->type == UNDIRECTED)
+    {
+      new_edge(graph, dst, src, weight);
+    }
   }
 
-  /* load edges */
-  while (fgets(line, MAX_LINE, fp) != NULL) {
-    if (sscanf(line, "%d%d%d", &i, &j, &weight) != 3) {
-      sscanf(line, "%d%d", &i, &j);
-      weight = 1;
-    }
-    new_edge (g, i, j, weight);
-    if (dir == 0) {
-      new_edge (g, j, i, weight);
-    }
-  } 
   fclose(fp);
 
-  return g;
+  return graph;
 }
 
-/*
- *  init all graph attributes
- */
-void graph_attribute_init (graph_t *g) {
-  vertex_t *v;
+graph_t *graph_transpose(graph_t *graph)
+{
+  // Graph cannot be null
+  util_check_r(graph != NULL, "Graph cannot be null, returning...\n", NULL);
 
-  v = g->g;
-  while (v!=NULL) {
-    v->color = WHITE;
-    v->dist = INT_MAX;
-    v->disc_time = -1;
-    v->endp_time = -1;
-    v->scc = -1;
-    v->pred = NULL;
-    v = v->next;
-  }
-
-  return;
-}
-
-/*
- *  transpose a given graph
- */
-graph_t *graph_transpose (graph_t *g) {
-  graph_t *h = NULL;
+  graph_t *graphT = NULL;
   vertex_t *tmp;
   edge_t *e;
-  int i;
 
-  h = (graph_t *) util_calloc (1, sizeof(graph_t));
-  h->nv = g->nv;
-  for (i=h->nv-1; i>=0; i--) {
-    h->g = new_node (h->g, i);
+  graphT = (graph_t *)util_malloc(sizeof(graph_t));
+
+  // Could not allocate, return null
+  util_check_r(graphT != NULL, "Graph cannot be null, returning...\n", NULL);
+
+  // Copy number of nodes
+  graphT->count = graph->count;
+
+  // Iterate and recreate nodes
+  tmp = graph->head;
+
+  while (tmp != NULL)
+  {
+    graphT->head = new_node(graphT->head, tmp->id, tmp->data);
+    tmp = tmp->next;
   }
-  tmp = g->g;
-  while (tmp != NULL) {
+
+  // Iterate trhough nodes and recreate edges
+  tmp = graph->head;
+
+  while (tmp != NULL)
+  {
     e = tmp->head;
-    while (e != NULL) {
-      new_edge (h, e->dst->id, tmp->id, e->weight);
+    while (e != NULL)
+    {
+      new_edge(graphT, e->dest, tmp, e->weight);
       e = e->next;
     }
     tmp = tmp->next;
   }
 
-  return h;
+  return graphT;
 }
 
-/*
- *  find the vertex element with a given id
- */
-vertex_t *graph_find (graph_t *g, int id) {
+int graph_find(graph_t *graph, int id, vertex_t **node)
+{
+  // Graph cannot ben null
+  util_check_r(graph != NULL, "Graph cannot be null, returning...\n", 0);
+
   vertex_t *v;
 
-  v = g->g;
-  while (v != NULL) {
-    if (v->id == id) {
-      return v;
+  v = graph->head;
+  while (v != NULL)
+  {
+    if (v->id == id)
+    {
+      // Node found
+      *node = v;
+      return 1;
     }
     v = v->next;
   }
 
-  return NULL;
+  // Node not found
+  *node = NULL;
+  return 1;
 }
 
-/*
- *  quit the memory associated to a graph
- */
-void graph_dispose (graph_t *g) {
+int graph_destroy(graph_t *graph, void (*freeData)(void *))
+{
+  // Check graph is not null before starting
+  util_check_r(graph != NULL, "Graph is already null, returning...\n", 0);
+
   vertex_t *v, *tmp;
   edge_t *e;
 
-  v = g->g;
-  while (v != NULL) {
-    while (v->head != NULL) {
+  // Iterate over nodes and free edges for each node, then the node
+  v = graph->head;
+  while (v != NULL)
+  {
+    // Iterate over edges
+    while (v->head != NULL)
+    {
       e = v->head;
       v->head = e->next;
-      free (e);
+      free(e);
     }
     tmp = v->next;
-    free (v);
+
+    // If possible, free node data
+    if (freeData != NULL)
+    {
+      freeData(v->data);
+    }
+
+    free(v);
     v = tmp;
   }
 
-  return;
+  return 1;
 }
 
-/*
- *  initialize the list element for a new vertex
- */
-static vertex_t *new_node (vertex_t *g, int id) {
+// Private Methods
+
+static vertex_t *new_node(vertex_t *next, int id, void *data)
+{
   vertex_t *v;
 
-  v = (vertex_t *) util_malloc (1 * sizeof(vertex_t));
+  v = (vertex_t *)util_malloc(1 * sizeof(vertex_t));
   v->id = id;
-  v->color = WHITE;
-  v->dist = INT_MAX;
-  v->disc_time = -1;
-  v->endp_time = -1;
+  v->data = data;
   v->head = NULL;
-  v->pred = NULL;
-  v->scc = -1;
-  v->next = g;
+  v->prev = NULL;
+  v->next = next;
 
   return v;
 }
 
-/*
- *  insert a new edge in the graph
- */
-static void new_edge (graph_t *g, int i, int j, int weight)  {
-  vertex_t *src, *dst;
+static void new_edge(graph_t *g, vertex_t *src, vertex_t *dst, int weight)
+{
+  // Source and Destination cannot be null
+  util_check_no_r(src != NULL, "Source cannot be null, returning...\n");
+  util_check_no_r(dst != NULL, "Destination cannot be null, returning...\n");
+
   edge_t *e;
 
-  src = graph_find (g, i);
-  dst = graph_find (g, j);
-
-  e = (edge_t *) util_malloc (1 * sizeof(edge_t));
-  e->dst = dst;
+  e = (edge_t *)util_malloc(1 * sizeof(edge_t));
+  e->dest = dst;
   e->weight = weight;
   e->next = src->head;
   src->head = e;
