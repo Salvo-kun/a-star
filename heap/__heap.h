@@ -1,9 +1,9 @@
 #ifndef _HEAP_PRIVATE
 #define _HEAP_PRIVATE
 
-#include "heapPublic.h"
+#include "heap.h"
 #include "../utils/util.h"
-#include "../hash_table/hashTablePublic.h"
+#include "../hash_table/hash_table.h"
 
 // Macro definitions
 #define LEFT(i) (2*i+1)

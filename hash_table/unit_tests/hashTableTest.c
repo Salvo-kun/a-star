@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../hashTablePublic.h"
+#include "../hash_table.h"
 
 int main(int argc, char **argv)
 {

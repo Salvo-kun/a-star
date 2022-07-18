@@ -7,7 +7,9 @@
 static vertex_t *new_node(vertex_t *, int, void *);
 static void new_edge(graph_t *, vertex_t *, vertex_t *, int);
 
-graph_t *graph_load(char *filename, void *(*readData)(char *))
+// Public Methods
+
+graph_t *graph_create(char *filename, void *(*readData)(char *))
 {
   graph_t *graph;
   char line[MAX_LINE];
@@ -120,6 +122,7 @@ int graph_find(graph_t *graph, int id, vertex_t **node)
 {
   // Graph cannot ben null
   util_check_r(graph != NULL, "Graph cannot be null, returning...\n", 0);
+  util_check_r(node != NULL, "Node pointer cannot be null, returning...\n", 0);
 
   vertex_t *v;
 
@@ -182,9 +185,11 @@ static vertex_t *new_node(vertex_t *next, int id, void *data)
 
   v = (vertex_t *)util_malloc(1 * sizeof(vertex_t));
   v->id = id;
+  v->true_cost = 0;
+  v->heuristic_cost = 0;
   v->data = data;
   v->head = NULL;
-  v->prev = NULL;
+  v->parent = NULL;
   v->next = next;
 
   return v;

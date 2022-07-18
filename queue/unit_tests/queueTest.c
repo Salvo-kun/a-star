@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../queuePublic.h"
+#include "../queue.h"
 
 int main(int argc, char **argv)
 {

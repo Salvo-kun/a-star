@@ -1,32 +1,41 @@
-#ifndef _GRAPH_PRIVATE
-#define _GRAPH_PRIVATE
+#ifndef _GRAPH
+#define _GRAPH
 
 #include "limits.h"
 #include "../utils/util.h"
 
 // Data structures declaration
-enum {UNDIRECTED, DIRECTED};
+enum
+{
+  UNDIRECTED,
+  DIRECTED
+};
 
 typedef struct graph_s graph_t;
 typedef struct vertex_s vertex_t;
 typedef struct edge_s edge_t;
 
-struct graph_s {
+struct graph_s
+{
   vertex_t *head;
   int count;
   int type;
 };
 
-struct edge_s {
+struct edge_s
+{
   int weight;
   vertex_t *dest;
   edge_t *next;
 };
 
-struct vertex_s {
+struct vertex_s
+{
   int id;
+  int true_cost;
+  int heuristic_cost;
   void *data;
-  vertex_t *prev;
+  vertex_t *parent;
   edge_t *head;
   vertex_t *next;
 };
@@ -48,7 +57,7 @@ extern graph_t *graph_create(char *filename, void *(*readData)(char *));
   Transposes a given graph.
   Returns NULL if an error occurs, the transposed graph pointer otherwise.
 */
-extern graph_t *graph_transpose (graph_t *graph);
+extern graph_t *graph_transpose(graph_t *graph);
 
 /*
   Finds a node inside the graph given its id. If the node is not found, its pointer is set to NULL.

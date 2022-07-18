@@ -1,7 +1,7 @@
 #ifndef _HASH_TABLE_PRIVATE
 #define _HASH_TABLE_PRIVATE
 
-#include "hashTablePublic.h"
+#include "hash_table.h"
 #include "../utils/util.h"
 
 // Macro definitions

@@ -1,7 +1,7 @@
 #ifndef _QUEUE_PRIVATE
 #define _QUEUE_PRIVATE
 
-#include "queuePublic.h"
+#include "queue.h"
 #include "../utils/util.h"
 
 // Data structures declaration

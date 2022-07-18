@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "../heapPublic.h"
+#include "../heap.h"
 
 int main(int argc, char **argv)
 {
