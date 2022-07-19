@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     int id2 = 22;
     int id3 = 4;
     int id4 = 2;
-    int *data;
+    int *data = (int *)util_malloc(sizeof(int));
 
     stack_push(stack, (void *)&id1);
     stack_push(stack, (void *)&id2);
@@ -25,6 +25,8 @@ int main(int argc, char **argv)
     stack_pop(stack, (void **)&data);
     stack_pop(stack, (void **)&data);
     stack_pop(stack, (void **)&data);
+
+    printf("%p %d\n%p %d\n\n", data, *data, &id1, id1);
 
     stack_stats(stdout, stack, printData);
 

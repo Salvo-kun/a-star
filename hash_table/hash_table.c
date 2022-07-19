@@ -36,12 +36,11 @@ hash_table_t *hash_table_create(int size)
 int hash_table_get(hash_table_t *hash_table, int key, void **data)
 {
     link_t current;
-    int found = 0;
 
     // Check hash_table and internal array are not null before starting
     util_check_r(hash_table != NULL, "hash_table cannot be null, returning...\n", 0);
     util_check_r(hash_table->nodes != NULL, "hash_table nodes cannot be null, returning...\n", 0);
-    //util_check_r(*data != NULL, "data pointer cannot be null, returning...\n", 0);
+    util_check_r(data != NULL, "data pointer cannot be null, returning...\n", 0);
 
     // Calculate bucket and iterate until node is either found and removed or not found
     int bucket = hash(key, hash_table->capacity);
@@ -53,7 +52,6 @@ int hash_table_get(hash_table_t *hash_table, int key, void **data)
         if (current->key == key)
         {
             // Node found, break
-            found = 1;
             *data = current->data;
             break;
         }
@@ -62,7 +60,7 @@ int hash_table_get(hash_table_t *hash_table, int key, void **data)
     }
 
 #if DEBUG
-    fprintf(stdout, "Node with key %d %s...\n", key, found ? "found" : "not found");
+    fprintf(stdout, "Node with key %d %s...\n", key, *data == NULL ? "found" : "not found");
 #endif
 
     // Node not found, data stays NULL

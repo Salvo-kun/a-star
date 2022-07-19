@@ -39,7 +39,7 @@ int stack_push(stack_t *st, void *data)
 
   node->data = data;
   node->next = st->head;
-st->head = node;
+  st->head = node;
   st->count++;
 
   return 1;
@@ -52,7 +52,7 @@ int stack_pop(stack_t *st, void **data_ptr)
   // Check stack and stack head are not null before starting
   util_check_r(st != NULL, "Stack cannot be null, returning...\n", 0);
   util_check_r(st->head != NULL, "Stack head cannot be null, returning...\n", 0);
-  util_check_r(*data_ptr != NULL, "Data pointer cannot be null, returning...\n", 0);
+  util_check_r(data_ptr != NULL, "Data pointer cannot be null, returning...\n", 0);
 
   node = st->head;
   *data_ptr = node->data;
@@ -110,7 +110,7 @@ void stack_stats(FILE *fp, stack_t *stack, void (*printData)(FILE *, void *))
       fprintf(fp, "Data: \n");
       printData(fp, node->data);
     }
-    
+
     fprintf(fp, "\n");
   }
 

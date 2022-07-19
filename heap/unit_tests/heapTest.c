@@ -15,9 +15,9 @@ int main(int argc, char **argv)
     int id5 = 9;
     int id6 = 8;
     int id7 = 7;
-    int *data;
+    int *data = (int *)util_malloc(sizeof(int));
     int key;
-    int *pos;
+    int *pos = (int *)util_malloc(sizeof(int));
 
     heap_insert(heap, 1, (void *)&id1, 2);
     heap_insert(heap, 2, (void *)&id2, 8);
@@ -33,6 +33,8 @@ int main(int argc, char **argv)
     heap_extract(heap, (void **)&data, &key);
     heap_extract(heap, (void **)&data, &key);
     heap_extract(heap, (void **)&data, &key);
+
+    printf("%p %d\n%p %d\n\n", data, *data, &id4, id4);
 
     heap_stats(stdout, heap, printData);
 

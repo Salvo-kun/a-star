@@ -80,6 +80,7 @@ int heap_find(heap_t *heap, int key, int **position)
   // Check heap is not null before starting
   util_check_r(heap != NULL, "Heap cannot be null, returning...\n", 0);
   util_check_r(heap->nodes != NULL, "Heap nodes cannot be null, returning...\n", 0);
+  util_check_r(position != NULL, "Position pointer cannot be null, returning...\n", 0);
 
   return hash_table_get(heap->dict, key, (void **)position);
 }

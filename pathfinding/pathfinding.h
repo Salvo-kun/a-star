@@ -13,15 +13,26 @@
 typedef struct path_s
 {
   stack_t *nodes;
-  int count;
   int cost;
+  int visited_nodes;
+  int revisited_nodes;
 } path_t;
 
 // Function prototypes
 
 /*
+  Finds path from source to destination in the given graph.
+  The path is returned through an input parameter, and it contains:
+    - the number of nodes in the path
+    - the cost of the path
+    - a stack containing the id of the nodes, from source to destination
+  If NULL, no path was found.
+  Returns 0 if an error occurs, 1 otherwise.
+*/
+extern int seq_djikstra_path(graph_t *graph, vertex_t *src, vertex_t *dst, path_t **path);
+
+/*
   Finds path from source to destination in the given graph, using an external heuristic function.
-  If heuristic is NULL or returns always 0, A* becomes Djikstra's algorithm.
   If heuristic overestimates the true cost, the path could not be the minimum cost one, otherwise it is guaranteed the path has minimum cost.
   The path is returned through an input parameter, and it contains:
     - the number of nodes in the path

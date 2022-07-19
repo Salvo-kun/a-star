@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     int id2 = 22;
     int id3 = 4;
     int id4 = 2;
-    int *data;
+    int *data = (int *)util_malloc(sizeof(int));
 
     queue_put(queue, (void *)&id1);
     queue_put(queue, (void *)&id2);
@@ -25,6 +25,8 @@ int main(int argc, char **argv)
     queue_get(queue, (void **)&data);
     queue_get(queue, (void **)&data);
     queue_get(queue, (void **)&data);
+
+    printf("%p %d\n%p %d\n\n", data, *data, &id4, id4);
     
     queue_stats(stdout, queue, printData);
 
