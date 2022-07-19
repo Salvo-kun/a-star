@@ -177,6 +177,42 @@ int graph_destroy(graph_t *graph, void (*freeData)(void *))
   return 1;
 }
 
+void graph_stats(FILE *fp, graph_t *graph, void (*printData)(FILE *, void *))
+{
+  util_check_no_r(graph != NULL, "Graph cannot be null, returning...\n");
+
+  fprintf(fp, "\n############## Graph Stats ##############\n\n");
+  fprintf(fp, "Type = %s\n", graph->type == 0 ? "UNDIRECTED" : "DIRECTED");
+  fprintf(fp, "Count = %d\n", graph->count);
+
+  vertex_t *n = graph->head;
+
+  printf("List of vertices:\n");
+  while (n != NULL)
+  {
+    printf("Node: %2d\n", n->id);
+
+    if (printData != NULL)
+    {
+      fprintf(fp, "Data: \n");
+      printData(fp, n->data);
+    }
+
+    edge_t *e = n->head;
+
+    while (e != NULL)
+    {
+      printf("Edge from [%2d] to [%2d] with weight %d\n", n->id, e->dest->id, e->weight);
+      e = e->next;
+    }
+
+    n = n->next;
+    fprintf(fp, "\n");
+  }
+
+  fprintf(fp, "\n########################################\n\n");
+}
+
 // Private Methods
 
 static vertex_t *new_node(vertex_t *next, int id, void *data)

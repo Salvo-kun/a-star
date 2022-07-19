@@ -62,6 +62,7 @@ int queue_get(queue_t *qp, void **data_ptr)
   // Check queue and queue head are not null before starting
   util_check_r(qp != NULL, "Queue cannot be null, returning...\n", 0);
   util_check_r(qp->head != NULL, "Queue head cannot be null, returning...\n", 0);
+  util_check_r(*data_ptr != NULL, "Data pointer cannot be null, returning...\n", 0);
 
   node = qp->head;
   *data_ptr = node->data;

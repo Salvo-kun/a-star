@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include "../heap.h"
 
+void printData(FILE *f, void *d);
+
 int main(int argc, char **argv)
 {
     heap_t *heap = heap_create(0, 100);
@@ -13,9 +15,9 @@ int main(int argc, char **argv)
     int id5 = 9;
     int id6 = 8;
     int id7 = 7;
-    int *data = (int *)util_malloc(sizeof(int));
+    int *data;
     int key;
-    int *pos = (int *)util_malloc(sizeof(int));
+    int *pos;
 
     heap_insert(heap, 1, (void *)&id1, 2);
     heap_insert(heap, 2, (void *)&id2, 8);
@@ -25,19 +27,24 @@ int main(int argc, char **argv)
     heap_insert(heap, 6, (void *)&id6, 88);
     heap_insert(heap, 7, (void *)&id7, 3);
 
-    heap_stats(stdout, heap, NULL);
+    heap_stats(stdout, heap, printData);
 
     heap_extract(heap, (void **)&data, &key);
     heap_extract(heap, (void **)&data, &key);
     heap_extract(heap, (void **)&data, &key);
     heap_extract(heap, (void **)&data, &key);
 
-    heap_stats(stdout, heap, NULL);
+    heap_stats(stdout, heap, printData);
 
     heap_find(heap, 6, &pos);
     heap_update(heap, 6, 0);
 
-    heap_stats(stdout, heap, NULL);
+    heap_stats(stdout, heap, printData);
 
     heap_destroy(heap, NULL);
+}
+
+void printData(FILE *f, void *d)
+{
+    fprintf(f, "%d", *((int *)d));
 }

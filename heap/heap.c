@@ -80,7 +80,6 @@ int heap_find(heap_t *heap, int key, int **position)
   // Check heap is not null before starting
   util_check_r(heap != NULL, "Heap cannot be null, returning...\n", 0);
   util_check_r(heap->nodes != NULL, "Heap nodes cannot be null, returning...\n", 0);
-  util_check_r(*position != NULL, "Position cannot be null, returning...\n", 0);
 
   return hash_table_get(heap->dict, key, (void **)position);
 }
@@ -111,13 +110,9 @@ int heap_extract(heap_t *heap, void **data, int *key)
   heap_swap(heap, 0, heap->count - 1);
   node = heap->nodes[heap->count - 1];
 
-  // Remove from hash table and free memory
-  hash_table_delete(heap->dict, node->key);
-  free(node);
-
   // Decremwnt heap size and realloc heap if halved capacity is enough
   heap->count--;
-  if (heap->count <= (int)(EMPTY_FACTOR * heap->capacity))
+  if (heap->count <= (int)(EMPTY_FACTOR * heap->capacity) && heap->count != 0)
   {
 #if DEBUG
     fprintf(stdout, "Heap empty at %d%%, reallocating...\n", (int)(EMPTY_FACTOR * 100));
@@ -133,6 +128,10 @@ int heap_extract(heap_t *heap, void **data, int *key)
     *key = node->key;
 
   heap_heapify(heap, 0);
+
+  // Remove from hash table and free memory
+  hash_table_delete(heap->dict, node->key);
+  free(node);
 
   return 1;
 }

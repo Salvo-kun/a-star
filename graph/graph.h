@@ -71,4 +71,9 @@ extern int graph_find(graph_t *graph, int id, vertex_t **node);
 */
 extern int graph_destroy(graph_t *graph, void (*freeData)(void *));
 
+/*
+  Print graph stats to the given file. Internal data are printed if printData is not NULL.
+*/
+extern void graph_stats(FILE *fp, graph_t *graph, void (*printData)(FILE *, void *));
+
 #endif
