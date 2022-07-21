@@ -1,7 +1,7 @@
-#ifndef _QUEUE_PRIVATE
-#define _QUEUE_PRIVATE
+#ifndef _STACK_PRIVATE
+#define _STACK_PRIVATE
 
-#include "queuePublic.h"
+#include "stack.h"
 #include "../utils/util.h"
 
 // Data structures declaration
@@ -10,9 +10,8 @@ typedef struct node {
   struct node *next;
 } node_t;
 
-struct queue {
+struct stack {
   node_t *head;
-  node_t *tail;
   int count;
 };
 

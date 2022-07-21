@@ -2,47 +2,78 @@
 #define _GRAPH
 
 #include "limits.h"
-#include "util.h"
+#include "../utils/util.h"
 
-/* constant declaration */
-#define MAX_LINE 100
-enum {WHITE, GREY, BLACK};
+// Data structures declaration
+enum
+{
+  UNDIRECTED,
+  DIRECTED
+};
 
 typedef struct graph_s graph_t;
 typedef struct vertex_s vertex_t;
 typedef struct edge_s edge_t;
 
-/* graph wrapper */
-struct graph_s {
-  vertex_t *g;
-  int nv;
+struct graph_s
+{
+  vertex_t *head;
+  int count;
+  int type;
 };
 
-/* list (vertices) of lists (edges): edges */
-struct edge_s {
+struct edge_s
+{
   int weight;
-  vertex_t *dst;
+  vertex_t *dest;
   edge_t *next;
 };
 
-/* list (vertices) of lists (edges): vertices */
-struct vertex_s {
+struct vertex_s
+{
   int id;
-  int color;
-  int dist;
-  int disc_time;
-  int endp_time;
-  int scc;
-  vertex_t *pred;
+  int true_cost;
+  int heuristic_cost;
+  void *data;
+  vertex_t *parent;
   edge_t *head;
   vertex_t *next;
 };
 
-/* extern function prototypes */
-extern graph_t *graph_load (char *);
-extern void graph_attribute_init (graph_t *);
-extern graph_t *graph_transpose (graph_t *);
-extern vertex_t *graph_find (graph_t *, int);
-extern void graph_dispose (graph_t *);
+// Function prototypes
+
+/*
+  Creates a graph loading it from a given file.
+  The file format is the following, where each field is separated by a space:
+    - One single line with two fields: number of nodes and type of graph (0 if undirected, 1 if directed)
+    - One line for each node with variable number of fields: node id, additional data (read through a custom function to be passed, if NULL these lines are not read)
+    - Variable number of lines with two fields: start node id, end node id (represents an edge)
+  Notice that each line cannot exceed 256 characters.
+  Returns NULL if an error occurs, the graph pointer otherwise.
+*/
+extern graph_t *graph_create(char *filename, void *(*readData)(char *));
+
+/*
+  Transposes a given graph.
+  Returns NULL if an error occurs, the transposed graph pointer otherwise.
+*/
+extern graph_t *graph_transpose(graph_t *graph);
+
+/*
+  Finds a node inside the graph given its id. If the node is not found, its pointer is set to NULL.
+  Returns 0 if an error occurs, 1 otherwise.
+*/
+extern int graph_find(graph_t *graph, int id, vertex_t **node);
+
+/*
+  Frees the allocated memory for the given graph, eventually freeing also the contained data (if freeData is not NULL).
+  Returns 0 if an error occurs, 1 otherwise.
+*/
+extern int graph_destroy(graph_t *graph, void (*freeData)(void *));
+
+/*
+  Print graph stats to the given file. Internal data are printed if printData is not NULL.
+*/
+extern void graph_stats(FILE *fp, graph_t *graph, void (*printData)(FILE *, void *));
 
 #endif
