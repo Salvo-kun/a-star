@@ -26,7 +26,7 @@ hash_table_t *hash_table_create(int size)
     hash_table->count = 0;
     hash_table->capacity = size;
 
-#if DEBUG
+#if DEBUG_HASH
     fprintf(stdout, "Created hash_table.\n");
 #endif
 
@@ -49,6 +49,7 @@ int hash_table_get(hash_table_t *hash_table, int key, void **data)
 
     while (current != NULL)
     {
+
         if (current->key == key)
         {
             // Node found, break
@@ -59,7 +60,7 @@ int hash_table_get(hash_table_t *hash_table, int key, void **data)
         current = current->next;
     }
 
-#if DEBUG
+#if DEBUG_HASH
     fprintf(stdout, "Node with key %d %s...\n", key, *data == NULL ? "found" : "not found");
 #endif
 
@@ -80,7 +81,7 @@ int hash_table_insert(hash_table_t *hash_table, int key, void *data)
 
     hash_table->nodes[bucket] = new_node;
 
-#if DEBUG
+#if DEBUG_HASH
     fprintf(stdout, "Inserted new node with key %d...\n", key);
 #endif
 
@@ -89,12 +90,12 @@ int hash_table_insert(hash_table_t *hash_table, int key, void *data)
 
     if (hash_table->count >= (int)(LOAD_THRESHOLD * hash_table->capacity))
     {
-#if DEBUG
+#if DEBUG_HASH
         fprintf(stdout, "hash_table full at %d%%, reallocating...\n", (int)(LOAD_THRESHOLD * 100));
 #endif
         // Reallocation must also reassign all elements, create a copy of nodes first, then destroy it after!
         link_t *old_nodes = hash_table->nodes;
-        hash_table->nodes = (link_t *)util_malloc(hash_table->capacity * 2 * sizeof(link_t));
+        hash_table->nodes = (link_t *)util_calloc(hash_table->capacity * 2, sizeof(link_t));
         hash_table->count = 0;
         hash_table->capacity *= 2;
 
@@ -157,7 +158,7 @@ int hash_table_update(hash_table_t *hash_table, int key, void *data)
         current = current->next;
     }
 
-#if DEBUG
+#if DEBUG_HASH
     fprintf(stdout, "Node with key %d %s...\n", key, found ? "updated" : "not found");
 #endif
 
@@ -201,7 +202,7 @@ int hash_table_delete(hash_table_t *hash_table, int key)
 
     hash_table->count--;
 
-#if DEBUG
+#if DEBUG_HASH
     fprintf(stdout, "Node with key %d %s...\n", key, found ? "deleted" : "not found");
 #endif
 
@@ -210,7 +211,7 @@ int hash_table_delete(hash_table_t *hash_table, int key)
 
 int hash_table_destroy(hash_table_t *hash_table, void (*freeData)(void *))
 {
-#if DEBUG
+#if DEBUG_HASH
     fprintf(stdout, "Freeing hash_table...\n");
 #endif
 

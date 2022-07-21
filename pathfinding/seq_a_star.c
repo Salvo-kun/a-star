@@ -158,6 +158,13 @@ int seq_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
                     e = e->next;
                     continue;
                 }
+                else
+                {
+                    result = heap_update(open_pq, e->dest->id, true_cost + heuristic_cost);
+
+                    // Check no errors occurred
+                    util_check_r(result, "Could not update in the open set, returning...\n", 0);
+                }
             }
 
             fprintf(stdout, "Updating costs and parent for node with id %d to open set\n", e->dest->id);

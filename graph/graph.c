@@ -33,6 +33,9 @@ graph_t *graph_create(char *filename, void *(*readData)(char *))
   util_check_r(sscanf(line, "%d%d", &graph->count, &graph->type) == 2, "First line has wrong format, returning...\n", NULL);
   util_check_r(graph->type == UNDIRECTED || graph->type == DIRECTED, "Graph type can only be 0 or 1, returning...\n", NULL);
 
+  // Init graph head
+  graph->head = NULL;
+
   // Create nodes (data not empty only if readData != NULL)
   for (i = 0; i < graph->count; ++i)
   {
@@ -44,6 +47,7 @@ graph_t *graph_create(char *filename, void *(*readData)(char *))
       // Reads line, scans id, reads additional data
       fgets(line, MAX_LINE, fp);
       sscanf(line, "%d", &id);
+
       data = readData(line);
     }
 
@@ -59,6 +63,13 @@ graph_t *graph_create(char *filename, void *(*readData)(char *))
 
     // Create edge
     vertex_t *src, *dst;
+
+    src = (vertex_t *)util_malloc(sizeof(vertex_t));
+    util_check_r(src != NULL, "Could not allocate src.", 0);
+
+    dst = (vertex_t *)util_malloc(sizeof(vertex_t));
+    util_check_r(dst != NULL, "Could not allocate dst.", 0);
+
     graph_find(graph, i, &src);
     graph_find(graph, j, &dst);
     new_edge(graph, src, dst, weight);
