@@ -107,7 +107,7 @@ void djikstraTest(char *filename, int srcId, int dstId, void *(*readData)(char *
             int *id;
 
             stack_pop(path->nodes, (void **)&id);
-            fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : " -> ");
+            fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
         }
 
         fprintf(stdout, "\n");
@@ -161,7 +161,7 @@ void astarTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *
             int *id;
 
             stack_pop(path->nodes, (void **)&id);
-            fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : " -> ");
+            fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
         }
 
         fprintf(stdout, "\n");

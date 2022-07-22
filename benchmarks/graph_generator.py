@@ -10,7 +10,8 @@ import networkx as nx
 import sys
 
 if __name__ == '__main__':
-    lines =[]
+    lines = []
+    size = int(sys.argv[3])
     
     # lines to 2d array
     with open(sys.argv[1]) as f:
@@ -40,10 +41,10 @@ if __name__ == '__main__':
         
         for node in nodes:
             x, y = node
-            file.write(str(256*x+y) + ' ' + str(x) + ' ' + str(y) + '\n')
+            file.write(str(size*x+y) + ' ' + str(x) + ' ' + str(y) + '\n')
             
         for edge in edges:
             x1, y1 = edge[0]
             x2, y2 = edge[1]
-            file.write(str(256*x1+y1) + ' ' +  str(256*x2+y2) + ' 1\n')
+            file.write(str(size*x1+y1) + ' ' +  str(size*x2+y2) + ' 1\n')
     
