@@ -113,14 +113,14 @@ int heap_extract(heap_t *heap, void **data, int *key)
 
   // Decremwnt heap size and realloc heap if halved capacity is enough
   heap->count--;
-//   if ((heap->count <= (int)(EMPTY_FACTOR * heap->capacity)) && heap->count != 0)
-//   {
-// #if DEBUG
-//     fprintf(stdout, "Heap empty at %d%%, reallocating with size %d...\n", (int)(EMPTY_FACTOR * 100), heap->count);
-// #endif
-//     heap->nodes = util_realloc(heap->nodes, (heap->count) * sizeof(link_t));
-//     heap->capacity /= 2;
-//   }
+  if ((heap->count <= (int)(EMPTY_FACTOR * heap->capacity)) && heap->capacity != 1)
+  {
+#if DEBUG
+    fprintf(stdout, "Heap empty at %d%%, reallocating with size %d...\n", (int)(EMPTY_FACTOR * 100), heap->count);
+#endif
+    heap->nodes = util_realloc(heap->nodes, (heap->capacity / 2) * sizeof(link_t));
+    heap->capacity /= 2;
+  }
 
   if (data != NULL)
     *data = node->data;
