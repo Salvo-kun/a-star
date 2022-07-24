@@ -1,12 +1,13 @@
 #include "util.h"
+#include <time.h>
 
 /*
  *  fopen (with check) utility function
  */
 FILE *util_fopen(char *name, char *mode)
 {
-  FILE *fp=fopen(name, mode);
-  util_check_m(fp!=NULL, "could not open file!");
+  FILE *fp = fopen(name, mode);
+  util_check_m(fp != NULL, "could not open file!");
   return fp;
 }
 
@@ -15,8 +16,8 @@ FILE *util_fopen(char *name, char *mode)
  */
 void *util_malloc(unsigned int size)
 {
-  void *ptr=malloc(size);
-  util_check_m(ptr!=NULL, "memory allocation failed!");
+  void *ptr = malloc(size);
+  util_check_m(ptr != NULL, "memory allocation failed!");
   return ptr;
 }
 
@@ -25,8 +26,8 @@ void *util_malloc(unsigned int size)
  */
 void *util_calloc(unsigned int num, unsigned int size)
 {
-  void *ptr=calloc(num, size);
-  util_check_m(ptr!=NULL, "memory allocation failed!");
+  void *ptr = calloc(num, size);
+  util_check_m(ptr != NULL, "memory allocation failed!");
   return ptr;
 }
 
@@ -35,8 +36,8 @@ void *util_calloc(unsigned int num, unsigned int size)
  */
 void *util_realloc(void *ptr, unsigned int size)
 {
-  ptr=realloc(ptr, size);
-  util_check_m(ptr!=NULL, "memory reallocation failed!");
+  ptr = realloc(ptr, size);
+  util_check_m(ptr != NULL, "memory reallocation failed!");
   return ptr;
 }
 
@@ -45,8 +46,8 @@ void *util_realloc(void *ptr, unsigned int size)
  */
 char *util_strdup(char *src)
 {
-  char *dst=strdup(src);
-  util_check_m(dst!=NULL, "memory allocation failed");
+  char *dst = strdup(src);
+  util_check_m(dst != NULL, "memory allocation failed");
   return dst;
 }
 
@@ -57,8 +58,10 @@ void util_array_dispose(void **ptr, unsigned int n, void (*quit)(void *))
 {
   int i;
 
-  if (quit != NULL) {
-    for (i=0; i<n; i++) {
+  if (quit != NULL)
+  {
+    for (i = 0; i < n; i++)
+    {
       quit(ptr[i]);
     }
   }
@@ -73,8 +76,9 @@ void **util_matrix_alloc(unsigned int n, unsigned int m, unsigned int size)
   void **ptr;
   int i;
 
-  ptr = (void **)util_malloc(n*sizeof(void *));
-  for (i=0; i<n; i++) {
+  ptr = (void **)util_malloc(n * sizeof(void *));
+  for (i = 0; i < n; i++)
+  {
     ptr[i] = util_calloc(m, size);
   }
   return ptr;
@@ -83,18 +87,31 @@ void **util_matrix_alloc(unsigned int n, unsigned int m, unsigned int size)
 /*
  *  matrix de-allocation utility function
  */
-void util_matrix_dispose(void ***ptr, unsigned int n, unsigned int m, 
+void util_matrix_dispose(void ***ptr, unsigned int n, unsigned int m,
                          void (*quit)(void *))
 {
   int i, j;
 
-  for (i=0; i<n; i++) {
-    if (quit != NULL) {
-      for (j=0; j<m; j++) {
+  for (i = 0; i < n; i++)
+  {
+    if (quit != NULL)
+    {
+      for (j = 0; j < m; j++)
+      {
         quit(ptr[i][j]);
       }
     }
     free(ptr[i]);
   }
   free(ptr);
+}
+
+uint64_t nano_count()
+{
+  struct timespec t;
+  int ret = clock_gettime(CLOCK_MONOTONIC, &t);
+
+  util_check_r(ret == 0, "Could not get timestamp", 0);
+
+  return (uint64_t)t.tv_sec * 1000000000 + t.tv_nsec;
 }

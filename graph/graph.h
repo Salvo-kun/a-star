@@ -3,6 +3,7 @@
 
 #include "limits.h"
 #include "../utils/util.h"
+#include "../hash_table/hash_table.h"
 
 // Data structures declaration
 enum
@@ -18,6 +19,7 @@ typedef struct edge_s edge_t;
 struct graph_s
 {
   vertex_t *head;
+  hash_table_t *nodes_map;
   int count;
   int type;
 };
@@ -49,15 +51,10 @@ struct vertex_s
     - One line for each node with variable number of fields: node id, additional data (read through a custom function to be passed, if NULL these lines are not read)
     - Variable number of lines with two fields: start node id, end node id (represents an edge)
   Notice that each line cannot exceed 256 characters.
+  If nThreads > 1, it will be used a parallel version of graph_create.
   Returns NULL if an error occurs, the graph pointer otherwise.
 */
 extern graph_t *graph_create(char *filename, void *(*readData)(char *));
-
-/*
-  Transposes a given graph.
-  Returns NULL if an error occurs, the transposed graph pointer otherwise.
-*/
-extern graph_t *graph_transpose(graph_t *graph);
 
 /*
   Finds a node inside the graph given its id. If the node is not found, its pointer is set to NULL.
