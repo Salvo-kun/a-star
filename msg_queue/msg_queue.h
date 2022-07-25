@@ -10,15 +10,20 @@ typedef struct message_queue message_queue_t;
 // Function prototypes
 
 /*
-  Creates a FIFO queue list.
-  Returns NULL if an error occurs, the queue pointer otherwise.
+  Creates list_size different queues.
+  Returns NULL if an error occurs, the qmessage queue pointer otherwise.
 */
 extern message_queue_t *message_queue_create(int list_size);
 
 /*
-  Returns the size of the queue.
+  Returns the number of queues inside the message queue.
 */
-extern int message_queue_count(message_queue_t *msg_q);
+extern int message_queue_size(message_queue_t *msg_q);
+
+/*
+  Returns the number of the message in the queue identified by id.
+*/
+extern int message_queue_count(message_queue_t *msg_q, int id);
 
 /*
   Check if all queues are empty
@@ -45,7 +50,7 @@ extern int message_queue_receive(message_queue_t *msg_q, void **data_ptr, int id
 extern int message_queue_destroy(message_queue_t *msg_q, void (*freeData)(void *));
 
 /*
-  Print queue stats to the given file. Internal data are printed if printData is not NULL.
+  Print message queue stats to the given file. Internal data are printed if printData is not NULL.
 */
 extern void message_queue_stats(FILE *fp, message_queue_t *msg_q, void (*printData)(FILE *, void *));
 
