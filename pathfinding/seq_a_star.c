@@ -92,7 +92,6 @@ int seq_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
 
         while (e != NULL)
         {
-
             fprintf(stdout, "Checking edge from node with id %d to node with id %d\n", min_node->id, e->dest->id);
             int true_cost = min_node->true_cost + e->weight;
             int heuristic_cost = heuristic == NULL ? 0 : heuristic(e->dest, dst);
