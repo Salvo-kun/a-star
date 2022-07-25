@@ -24,6 +24,7 @@ if __name__ == '__main__':
                 lines.append(line)
         a = np.array(lines)
         
+        
     G = nx.grid_2d_graph(*a.shape)
     
     # remove those nodes where the corresponding value is != 0
@@ -35,7 +36,7 @@ if __name__ == '__main__':
     with open(sys.argv[2], 'w') as file:
         nodes = list(G.nodes())
         edges = list(G.edges())
-        directed = 1
+        directed = 1 if nx.is_directed(G) else 0
         
         file.write(str(len(nodes)) + ' ' + str(directed) + '\n')
         
