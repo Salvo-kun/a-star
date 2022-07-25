@@ -35,12 +35,20 @@ message_queue_t *message_queue_create(int list_size)
     return msg_q;
 }
 
-int message_queue_count(message_queue_t *msg_q)
+int message_queue_size(message_queue_t *msg_q)
 {
     // Check message_queue_t is not null before starting
     util_check_r(msg_q != NULL, "message_queue_t cannot be null, returning...\n", 0);
 
     return msg_q->list_size;
+}
+
+int message_queue_count(message_queue_t *msg_q, int id)
+{
+    // Check message_queue_t is not null before starting
+    util_check_r(msg_q != NULL, "message_queue_t cannot be null, returning...\n", 0);
+
+    return queue_count(msg_q->queue_list[id]);
 }
 
 int message_queue_send(message_queue_t *msg_q, void *data, int id)
