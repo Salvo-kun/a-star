@@ -205,31 +205,31 @@ void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_
 
     fprintf(stdout, "A*\n\n");
 
-    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, 5);
+    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, 2);
 
-    // if (path != NULL)
-    // {
-    //     fprintf(stdout, "\nFound path with cost = %d and length = %d. Visited nodes = %d\n", path->cost, stack_count(path->nodes), path->visited_nodes);
+    if (path != NULL)
+    {
+        fprintf(stdout, "\nFound path with cost = %d and length = %d. Visited nodes = %d\n", path->cost, stack_count(path->nodes), path->visited_nodes);
 
-    //     while (!stack_empty_m(path->nodes))
-    //     {
-    //         int *id;
+        while (!stack_empty_m(path->nodes))
+        {
+            int *id;
 
-    //         stack_pop(path->nodes, (void **)&id);
-    //         fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
-    //     }
+            stack_pop(path->nodes, (void **)&id);
+            fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
+        }
 
-    //     fprintf(stdout, "\n");
-    // }
-    // else
-    // {
-    //     fprintf(stdout, "Path not found\n");
-    // }
+        fprintf(stdout, "\n");
+    }
+    else
+    {
+        fprintf(stdout, "Path not found\n");
+    }
 
-    // graph_destroy(g, readData == NULL ? NULL : free);
-    // free(path);
+    graph_destroy(g, readData == NULL ? NULL : free);
+    free(path);
 
-    // fprintf(stdout, "\n\n");
+    fprintf(stdout, "\n\n");
 }
 
 void smallGraphTest(char *filename, int srcId, int dstId)
