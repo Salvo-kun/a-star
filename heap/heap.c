@@ -52,9 +52,14 @@ int heap_insert(heap_t *heap, int key, void *data, int priority)
 
   // Increment heap size and realloc heap if full
   int position = heap->count++;
+  if (pos == NULL)
+  {
+    pos = (int *)util_malloc(sizeof(int));
+  }
+  *pos = position;
 
   // Insert into the hash table, this way e always have that what is inside the heap is already inside the hash table
-  hash_table_insert(heap->dict, new_node->key, &position);
+  hash_table_insert(heap->dict, new_node->key, pos);
 
   if (heap->count >= (int)(FULL_FACTOR * heap->capacity))
   {
@@ -154,6 +159,8 @@ int heap_update(heap_t *heap, int key, int newPriority)
 
   // Init new node from the old one
   old_node = heap->nodes[*position];
+  util_check_r(old_node->key == key, "Found key different from searched one, returning...\n", 0);
+
   link_t new_node;
   new_node = (link_t)util_malloc(sizeof(*new_node));
   new_node->key = old_node->key;
@@ -198,6 +205,11 @@ int heap_destroy(heap_t *heap, void (*freeData)(void *))
     }
 
     free(heap->nodes);
+  }
+
+  if (heap->dict != NULL)
+  {
+    hash_table_destroy(heap->dict, free);
   }
 
   free(heap);
@@ -286,7 +298,9 @@ void heap_move_down(heap_t *heap, link_t node, int position)
   heap->nodes[position] = node;
 
   // Track node position
-  hash_table_update(heap->dict, node->key, &position);
+  int *pos = (int *)util_malloc(sizeof(int));
+  *pos = position;
+  hash_table_update(heap->dict, node->key, pos);
 
   // Rebuild heap
   heap_heapify(heap, position);
@@ -304,8 +318,9 @@ void heap_move_up(heap_t *heap, link_t node, int position)
     heap->nodes[position] = heap->nodes[PARENT(position)];
 
     // Track parent node position, do a copy to avoid problem due to passing references
-    int pos = position;
-    hash_table_update(heap->dict, heap->nodes[PARENT(position)]->key, &pos);
+    int *pos = (int *)util_malloc(sizeof(int));
+    *pos = position;
+    hash_table_update(heap->dict, heap->nodes[position]->key, pos);
 
     position = PARENT(position);
   }
@@ -313,8 +328,11 @@ void heap_move_up(heap_t *heap, link_t node, int position)
   // Insert node at the current position
   heap->nodes[position] = node;
 
+  int *pos = (int *)util_malloc(sizeof(int));
+  *pos = position;
+
   // Track node position
-  hash_table_update(heap->dict, node->key, &position);
+  hash_table_update(heap->dict, node->key, pos);
 }
 
 void heap_swap(heap_t *heap, int first_pos, int second_pos)
@@ -329,6 +347,11 @@ void heap_swap(heap_t *heap, int first_pos, int second_pos)
   heap->nodes[first_pos] = temp;
 
   // Track nodes' positions
-  hash_table_update(heap->dict, heap->nodes[first_pos]->key, &first_pos);
-  hash_table_update(heap->dict, heap->nodes[second_pos]->key, &second_pos);
+  int *pos1 = (int *)util_malloc(sizeof(int));
+  *pos1 = first_pos;
+  int *pos2 = (int *)util_malloc(sizeof(int));
+  *pos2 = second_pos;
+
+  hash_table_update(heap->dict, heap->nodes[first_pos]->key, pos1);
+  hash_table_update(heap->dict, heap->nodes[second_pos]->key, pos2);
 }

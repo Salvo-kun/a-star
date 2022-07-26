@@ -66,6 +66,7 @@ int message_queue_send(message_queue_t *msg_q, void *data, int id)
 int message_queue_receive(message_queue_t *msg_q, void **data_ptr, int id)
 {
     util_check_r(msg_q != NULL, "message_queue_t cannot be null, returning...\n", 0);
+    util_check_r(data_ptr != NULL, "data_ptr cannot be null, returning...\n", 0);
 
     pthread_mutex_lock(msg_q->mutex_list[id]);
     queue_get(msg_q->queue_list[id], data_ptr);

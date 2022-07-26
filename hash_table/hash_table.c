@@ -61,7 +61,7 @@ int hash_table_get(hash_table_t *hash_table, int key, void **data)
     }
 
 #if DEBUG_HASH
-    fprintf(stdout, "Node with key %d %s...\n", key, *data == NULL ? "found" : "not found");
+    fprintf(stdout, "Node with key %d %s...\n", key, *data == NULL ? "not found" : "found");
 #endif
 
     // Node not found, data stays NULL
@@ -69,7 +69,7 @@ int hash_table_get(hash_table_t *hash_table, int key, void **data)
 }
 
 int hash_table_insert(hash_table_t *hash_table, int key, void *data)
-{
+{  
     // Check hash_table and internal array are not null before starting
     util_check_r(hash_table != NULL, "hash_table cannot be null, returning...\n", 0);
     util_check_r(hash_table->nodes != NULL, "hash_table nodes cannot be null, returning...\n", 0);

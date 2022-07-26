@@ -234,13 +234,16 @@ void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_
 
 void smallGraphTest(char *filename, int srcId, int dstId)
 {
-    djikstraTest(filename, srcId, dstId, NULL);
-    astarTest(filename, srcId, dstId, NULL, NULL);
-    // astarParTest(filename, srcId, dstId, NULL, NULL);
+    // djikstraTest(filename, srcId, dstId, NULL);
+    // astarTest(filename, srcId, dstId, NULL, NULL);
+    astarParTest(filename, srcId, dstId, NULL, NULL);
 }
 
 void cityGraphTest(char *filename, int srcId, int dstId)
 {
     // djikstraTest(filename, srcId, dstId, read_2d_data);
+    // fprintf(stdout, "\nZAMPA\n");
     astarTest(filename, srcId, dstId, heuristic, read_2d_data);
+    // fprintf(stdout, "\nZAMPA\n");
+    // astarParTest(filename, srcId, dstId, heuristic, read_2d_data);
 }

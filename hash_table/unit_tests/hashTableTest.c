@@ -2,6 +2,11 @@
 #include <stdlib.h>
 #include "../hash_table.h"
 
+void printData(FILE *f, void *d)
+{
+    fprintf(f, "%d", *((int *)d));
+}
+
 int main(int argc, char **argv)
 {
   hash_table_t *ht = hash_table_create(30);
@@ -12,7 +17,7 @@ int main(int argc, char **argv)
   for (int i = 0; i < 10; ++i)
   {
     hash_table_insert(ht, i, (void *)(newData + i));
-    hash_table_stats(stdout, ht, NULL);
+    hash_table_stats(stdout, ht, printData);
   }
 
   hash_table_get(ht, 5, (void **)&data);
@@ -21,9 +26,9 @@ int main(int argc, char **argv)
 
   *data = 100;
   hash_table_update(ht, 5, data);
-  hash_table_stats(stdout, ht, NULL);
+  hash_table_stats(stdout, ht, printData);
   hash_table_delete(ht, 5);
-  hash_table_stats(stdout, ht, NULL);
+  hash_table_stats(stdout, ht, printData);
 
   hash_table_destroy(ht, NULL);
 }
