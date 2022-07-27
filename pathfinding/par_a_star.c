@@ -20,6 +20,13 @@ struct thread_d
     int *path_owner; // owner of the lock_condition mutex
 
     int *termination_flags; // flags use to detect the terminate condition
+
+    pthread_cond_t **cond_variables;
+    // pthread_mutex_t **cond_v_mutexes;
+    pthread_mutex_t *cond_v_mutex;
+
+    int *terminate_counter;
+    int *program_terminated;
 };
 
 struct msg_data
@@ -29,13 +36,13 @@ struct msg_data
     int true_cost;
 };
 
-int terminate_detection(message_queue_t *msg_q, int *termination_flags, int n_flags);
+int terminate_detection(struct thread_d *data);
 int compute_recipient(vertex_t *v, int n);
 void *thread_search_path(void *args);
 
 int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristic)(vertex_t *, vertex_t *), path_t **path, int n_threads_to_use)
 {
-    int i, result;
+    int i, result, terminate_counter = 0, program_terminated = 0;
     int path_owner = -1;
     printf("ASTAR PATH PAR\n");
 
@@ -70,6 +77,7 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
     // Check allocation was successful
     util_check_r(path != NULL, "Could not allocate path, returning...\n", 0);
     (*path)->nodes = stack_create();
+    fprintf(stdout, "---STACK Creation---\n");
     // Check allocation was successful
     util_check_r((*path)->nodes != NULL, "Could not allocate path's stack, returning...\n", 0);
     // incumbent cost initialized to infinite
@@ -79,7 +87,35 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
 
     int *termination_flags = (int *)util_calloc(n_threads_to_use, sizeof(int));
 
+    pthread_cond_t **cond_variables = (pthread_cond_t **)util_malloc(n_threads_to_use * sizeof(pthread_cond_t *));
+    util_check_r(cond_variables != NULL, "Could not allocate condition variables vector, returning...\n", 0);
+    // pthread_mutex_t **cond_v_mutexes = (pthread_mutex_t **)util_malloc(n_threads_to_use * sizeof(pthread_mutex_t *));
+    // util_check_r(cond_v_mutexes != NULL, "Could not allocate condition variable mutex vector, returning...\n", 0);
+
+    /*
+        =============
+        SINGLE MUTEXX
+        =============
+    */
+
+    pthread_mutex_t *cond_v_mutex = (pthread_mutex_t *)util_malloc(n_threads_to_use * sizeof(pthread_mutex_t));
+    util_check_r(cond_v_mutex != NULL, "Could not allocate condition variable mutex vector, returning...\n", 0);
+
+    util_check_r(pthread_mutex_init(cond_v_mutex, NULL) == 0, "Could not initialized condition variable mutex, returning...\n", 0);
+
     printf("Creating %d threads\n", n_threads_to_use);
+
+    for (i = 0; i < n_threads_to_use; i++)
+    {
+        cond_variables[i] = (pthread_cond_t *)util_malloc(sizeof(pthread_cond_t));
+        util_check_r(cond_variables[i] != NULL, "Could not allocate condition variable, returning...\n", 0);
+        // cond_v_mutexes[i] = (pthread_mutex_t *)util_malloc(sizeof(pthread_mutex_t));
+        // util_check_r(cond_v_mutexes[i] != NULL, "Could not allocate condition variable mutex, returning...\n", 0);
+
+        // util_check_r(pthread_mutex_init(cond_v_mutexes[i], NULL) == 0, "Could not initialized condition variable mutex, returning...\n", 0);
+
+        util_check_r(pthread_cond_init(cond_variables[i], NULL) == 0, "Could not initialized condition variable, returning...\n", 0);
+    }
 
     for (i = 0; i < n_threads_to_use; i++)
     {
@@ -94,6 +130,11 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
         thread_data[i].lock_path = lock_path;
         thread_data[i].path_owner = &path_owner;
         thread_data[i].termination_flags = termination_flags;
+        // thread_data[i].cond_v_mutexes = cond_v_mutexes;
+        thread_data[i].cond_v_mutex = cond_v_mutex;
+        thread_data[i].cond_variables = cond_variables;
+        thread_data[i].terminate_counter = &terminate_counter;
+        thread_data[i].program_terminated = &program_terminated;
 
         // Creates the priority queue which will contain unvisited nodes
         open_q[i] = heap_create(0, 10);
@@ -126,6 +167,11 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
         pthread_join(threads[i], NULL);
         hash_table_destroy(closed_set[i], NULL);
         heap_destroy(open_q[i], NULL);
+        // pthread_mutex_destroy(cond_v_mutexes[i]);
+        pthread_cond_destroy(cond_variables[i]);
+
+        free(cond_variables[i]);
+        // free(cond_v_mutexes[i]);
     }
 
     if ((*path)->cost == INT_MAX)
@@ -135,6 +181,8 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
         return 1;
     }
 
+    // free(cond_v_mutexes);
+    free(cond_variables);
     free(termination_flags);
     pthread_mutex_destroy(lock_condition);
     free(lock_condition);
@@ -155,7 +203,7 @@ void *thread_search_path(void *args)
     vertex_t *data, *data2;
     struct msg_data *m_data, *m_data2;
 
-    while (terminate_detection(thread_data->msg_q, thread_data->termination_flags, thread_data->n_thread))
+    while (terminate_detection(thread_data))
     {
         data2 = NULL;
         m_data2 = NULL;
@@ -288,7 +336,7 @@ void *thread_search_path(void *args)
             thread_data->termination_flags[thread_data->id_thread] = 1;
             if (!open_is_empty)
                 heap_insert(thread_data->open_q, key, data2, data2->true_cost + data2->heuristic_cost);
-            //sleep(1);
+            // sleep(1);
             continue;
         }
 
@@ -327,13 +375,16 @@ void *thread_search_path(void *args)
                 vertex_t *n = thread_data->dst;
                 // destroy previous path and create a new one
                 stack_destroy((*thread_data->path)->nodes, NULL);
+                fprintf(stdout, "---STACK Destroy---\n");
                 (*thread_data->path)->nodes = stack_create();
+                fprintf(stdout, "---STACK Creation2---\n");
                 // Check allocation was successful
                 util_check_r((*thread_data->path)->nodes != NULL, "Could not allocate path's stack, returning...\n", 0);
 
                 // check that current thread can modify the path (another thread has found a better solution)
                 while (n != NULL && (*thread_data->path_owner) == thread_data->id_thread)
                 {
+                    fprintf(stdout, "---STACK Pushing---\n");
                     result = stack_push((*thread_data->path)->nodes, (void *)&(n->id));
                     // Check no errors occurred
                     util_check_r(result, "Could not insert in the path's stack, returning...\n", 0);
@@ -347,6 +398,7 @@ void *thread_search_path(void *args)
 
         while (e != NULL)
         {
+            int recipent;
             m_data2 = (struct msg_data *)util_malloc(sizeof(struct msg_data));
             // Check allocation was successful
             util_check_r(m_data2 != NULL, "Could not allocate struct message to receive data, returning...\n", 0);
@@ -358,8 +410,13 @@ void *thread_search_path(void *args)
             m_data2->n = data2;
             m_data2->n_successor = e->dest;
 
-            fprintf(stdout, "Thread %d send message to %d\n", thread_data->id_thread, compute_recipient(e->dest, thread_data->n_thread));
-            message_queue_send(thread_data->msg_q, (void *)m_data2, compute_recipient(e->dest, thread_data->n_thread));
+            recipent = compute_recipient(e->dest, thread_data->n_thread);
+
+            fprintf(stdout, "Thread %d send message to %d\n", thread_data->id_thread, recipent);
+            pthread_mutex_lock(thread_data->cond_v_mutex);
+            message_queue_send(thread_data->msg_q, (void *)m_data2, recipent);
+            pthread_cond_signal(thread_data->cond_variables[recipent]);
+            pthread_mutex_unlock(thread_data->cond_v_mutex);
 
             e = e->next;
         }
@@ -379,15 +436,60 @@ void *thread_search_path(void *args)
  * @param n_flags is the size of the termination_flags array
  * @return int 0 if the termination condition occurs, otherwise return 1
  */
-int terminate_detection(message_queue_t *msg_q, int *termination_flags, int n_flags)
+int terminate_detection(struct thread_d *data)
 {
-    for (int i = 0; i < n_flags; i++)
-        if (termination_flags[i] == 0)
-            return 1;
+    int i;
 
-    if (message_queue_all_empty(msg_q))
+    // no condition variable solution
+
+    // for (int i = 0; i < n_flags; i++)
+    //     if (termination_flags[i] == 0)
+    //         return 1;
+
+    // if (message_queue_all_empty(msg_q))
+    //     return 0;
+
+    // return 1;
+
+    pthread_mutex_lock(data->cond_v_mutex);
+    // while my message queue is empty and my open queue is not useful/empty i sleep check that I'm not the last one to go sleep
+    while (data->termination_flags[data->id_thread] && message_queue_count(data->msg_q, data->id_thread) == 0 && !(*data->program_terminated))
+    {
+        // check terminate_counter < n_thread -1
+        if ((*data->terminate_counter) >= data->n_thread - 1 && message_queue_all_empty(data->msg_q))
+        {
+            // last thread that will go sleep instead set program_terminated and wake up all others
+            (*data->program_terminated) = 1;
+
+            fprintf(stdout, "---Termination detected Waking all %d---\n", data->id_thread);
+            for (i = 0; i < data->n_thread; i++)
+            {
+                pthread_cond_signal(data->cond_variables[i]);
+            }
+        }
+        else
+        {
+            // only one consumer for each condition variable, the condition to wake up is an arriving message, no one except me can receive a message from my queue
+            fprintf(stdout, "---Going Sleeeeeep, thread %d---\n", data->id_thread);
+            (*data->terminate_counter) += 1;
+
+            pthread_cond_wait(data->cond_variables[data->id_thread], data->cond_v_mutex);
+
+            (*data->terminate_counter) -= 1;
+
+            fprintf(stdout, "---Bonjour, Thread %d---\n", data->id_thread);
+
+            // else
+        }
+    }
+
+    pthread_mutex_unlock(data->cond_v_mutex);
+
+    if ((*data->program_terminated))
+    {
+        fprintf(stdout, "---Terminating thread %d---\n", data->id_thread);
         return 0;
-
+    }
     return 1;
 }
 
