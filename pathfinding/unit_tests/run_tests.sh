@@ -7,3 +7,6 @@ gcc -Wall -g -o ./bin/tests ../../utils/util.c ../../graph/graph.c ../../heap/he
 if [ -f "bin/tests" ]; then
     bin/tests $1 $2 $3 $4 > results/results.log 2>&1
 fi
+
+# ./run_tests.sh 1 ../../benchmarks/maze-maps/proc/maze512-32-0.txt 248427 16417
+# Result: Found path with cost = 2173 and length = 2174
