@@ -42,6 +42,20 @@ void *util_realloc(void *ptr, unsigned int size)
 }
 
 /*
+ * free (with check) utility function
+ *
+ */
+extern void util_free(void *ptr)
+{
+  if (ptr != NULL)
+  {
+    free(ptr);
+    ptr = NULL;
+  }
+  return;
+}
+
+/*
  *  strdup (with check) utility function
  */
 char *util_strdup(char *src)
