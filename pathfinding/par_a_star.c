@@ -232,7 +232,6 @@ void *thread_search_path(void *args)
                 fprintf(stdout, "%d | Node with id %d already in closed set\n", thread_data->id_thread, msg_data_rcv->n_successor->id);
                 if (msg_data_rcv->true_cost < msg_data_rcv->n_successor->true_cost)
                 {
-
                     fprintf(stdout, "%d | Found smaller cost for node with id %d, readding it to open set\n", thread_data->id_thread, msg_data_rcv->n_successor->id);
                     result = hash_table_delete(thread_data->closed_set, msg_data_rcv->n_successor->id);
 
@@ -280,7 +279,7 @@ void *thread_search_path(void *args)
                 {
                     fprintf(stdout, "%d | Skipping\n", thread_data->id_thread);
 
-                    util_free(data);
+                    //util_free(data);
                     // util_free(msg_data_rcv);
                     util_free(position);
                     continue;
@@ -318,7 +317,9 @@ void *thread_search_path(void *args)
         {
             thread_data->termination_flags[thread_data->id_thread] = 1;
             if (!open_is_empty)
+            {
                 heap_insert(thread_data->open_q, key, min_node, min_node->true_cost + min_node->heuristic_cost);
+            }
             // sleep(1);
             continue;
         }
@@ -405,7 +406,7 @@ void *thread_search_path(void *args)
             e = e->next;
         }
 
-        util_free(data);
+        //util_free(data);
         // util_free(msg_data_rcv);
     }
 
