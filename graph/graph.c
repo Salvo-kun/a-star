@@ -2,7 +2,7 @@
 
 // Public Methods
 
-graph_t *graph_create(char *filename, void *(*readData)(char *))
+graph_t *graph_create(char *filename, void *(*readData)(char *, int *))
 {
   graph_t *graph;
   char line[MAX_LINE];
@@ -43,9 +43,7 @@ graph_t *graph_create(char *filename, void *(*readData)(char *))
     {
       // Reads line, scans id, reads additional data
       fgets(line, MAX_LINE, fp);
-      sscanf(line, "%d", &id);
-
-      data = readData(line);
+      data = readData(line, &id);
     }
 
     graph->head = new_node(graph->head, id, data);

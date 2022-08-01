@@ -13,7 +13,7 @@ struct coord_2d_s
 };
 
 int heuristic(vertex_t *a, vertex_t *b);
-void *read_2d_data(char *line);
+void *read_2d_data(char *line, int *id);
 void smallGraphTest(char *filename, int srcId, int dstId);
 void cityGraphTest(char *filename, int srcId, int dstId);
 void djikstraTest(char *filename, int srcId, int dstId, void *(*readData)(char *));
@@ -51,15 +51,16 @@ int main(int argc, char **argv)
 
 int heuristic(vertex_t *a, vertex_t *b)
 {
+    //fprintf(stdout, "Start (%d) %d %d, End (%d) %d %d\n", a->id, ((coord_2d_t *)a->data)->x, ((coord_2d_t *)a->data)->y, b->id, ((coord_2d_t *)b->data)->x, ((coord_2d_t *)b->data)->y);
     return abs(((coord_2d_t *)a->data)->x - ((coord_2d_t *)b->data)->x) + abs(((coord_2d_t *)a->data)->y - ((coord_2d_t *)b->data)->y);
 }
 
-void *read_2d_data(char *line)
+void *read_2d_data(char *line, int *id)
 {
     int x, y;
     coord_2d_t *data;
 
-    sscanf(line, "%d %d", &x, &y);
+    sscanf(line, "%d %d %d", id, &x, &y);
 
     data = (coord_2d_t *)util_malloc(sizeof(coord_2d_t));
     util_check_r(data != NULL, "Could not allocate data.", 0);
@@ -205,7 +206,7 @@ void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_
 
     fprintf(stdout, "A*\n\n");
 
-    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, 5);
+    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, 2);
 
     if (path != NULL)
     {

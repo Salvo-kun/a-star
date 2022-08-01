@@ -77,7 +77,7 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
     util_check_r(path != NULL, "Could not allocate path, returning...\n", 0);
     (*path)->nodes = stack_create();
     fprintf(stdout, "---STACK Creation---\n");
-    // Check allocation was successful
+    //  Check allocation was successful
     util_check_r((*path)->nodes != NULL, "Could not allocate path's stack, returning...\n", 0);
     // incumbent cost initialized to infinite
     (*path)->cost = INT_MAX;
@@ -181,7 +181,7 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
 
 void *thread_search_path(void *args)
 {
-    int visited_nodes = 0, revisited_nodes = 0, result, key, open_is_empty;
+    int visited_nodes = 0, revisited_nodes = 0, result, open_is_empty;
     struct thread_d *thread_data = (struct thread_d *)args;
     vertex_t *data, *min_node;
     struct msg_data *msg_data_rcv, *msg_data_send;
@@ -218,7 +218,7 @@ void *thread_search_path(void *args)
 
             // Get and remove from message queue a triplet (n_successor, g(n) + c(n, n_successor), n);
             message_queue_receive(thread_data->msg_q, (void **)&msg_data_rcv, thread_data->id_thread);
-            fprintf(stdout, "Thread %d received message\n", thread_data->id_thread);
+            fprintf(stdout, "Thread %d received message from node %d to node %d with cost %d\n", thread_data->id_thread, msg_data_rcv->n->id, msg_data_rcv->n_successor->id, msg_data_rcv->true_cost);
 
             result = hash_table_get(thread_data->closed_set, msg_data_rcv->n_successor->id, (void **)&data);
 
@@ -270,7 +270,7 @@ void *thread_search_path(void *args)
 
                 if (position == NULL)
                 {
-                    fprintf(stdout, "%d | Add node with id %d to open set\n", thread_data->id_thread, msg_data_rcv->n_successor->id);
+                    fprintf(stdout, "%d | Add node with id %d to open set with cost %d\n", thread_data->id_thread, msg_data_rcv->n_successor->id, msg_data_rcv->true_cost + heuristic_cost);
                     result = heap_insert(thread_data->open_q, msg_data_rcv->n_successor->id, (void *)(msg_data_rcv->n_successor), msg_data_rcv->true_cost + heuristic_cost);
                     // Check no errors occurred
                     util_check_r(result, "Could not insert in the open set, returning...\n", 0);
@@ -279,21 +279,21 @@ void *thread_search_path(void *args)
                 {
                     fprintf(stdout, "%d | Skipping\n", thread_data->id_thread);
 
-                    //util_free(data);
-                    // util_free(msg_data_rcv);
-                    util_free(position);
+                    // util_free(data);
+                    //  util_free(msg_data_rcv);
+                    //  util_free(position);
                     continue;
                 }
                 else
                 {
-                    fprintf(stdout, "%d | Updating node with id %d to open set\n", thread_data->id_thread, msg_data_rcv->n_successor->id);
+                    fprintf(stdout, "%d | Updating node with id %d to open set with new cost %d\n", thread_data->id_thread, msg_data_rcv->n_successor->id, msg_data_rcv->true_cost + heuristic_cost);
                     result = heap_update(thread_data->open_q, msg_data_rcv->n_successor->id, msg_data_rcv->true_cost + heuristic_cost);
 
                     // Check no errors occurred
                     util_check_r(result, "Could not update in the open set, returning...\n", 0);
                 }
 
-                util_free(position);
+                // util_free(position);
             }
 
             fprintf(stdout, "Updating costs and parent for node with id %d to open set\n", msg_data_rcv->n_successor->id);
@@ -308,7 +308,7 @@ void *thread_search_path(void *args)
         if (!open_is_empty)
         {
             fprintf(stdout, "%d | Extracting data from open set\n", thread_data->id_thread);
-            result = heap_extract(thread_data->open_q, (void *)&min_node, &key);
+            result = heap_extract(thread_data->open_q, (void *)&min_node, NULL);
             // Check no errors occurred
             util_check_r(result, "Could not extract from the open set, returning...\n", 0);
         }
@@ -318,7 +318,7 @@ void *thread_search_path(void *args)
             thread_data->termination_flags[thread_data->id_thread] = 1;
             if (!open_is_empty)
             {
-                heap_insert(thread_data->open_q, key, min_node, min_node->true_cost + min_node->heuristic_cost);
+                heap_insert(thread_data->open_q, min_node->id, min_node, min_node->true_cost + min_node->heuristic_cost);
             }
             // sleep(1);
             continue;
@@ -333,12 +333,14 @@ void *thread_search_path(void *args)
 
         if (min_node->id == thread_data->dst->id)
         {
+            int found_min = 0;
             fprintf(stdout, "thread %d arrived to goal node with id %d\n", thread_data->id_thread, min_node->id);
 
             // acquire lock for checking condition
             pthread_mutex_lock(thread_data->lock_condition);
             if (min_node->true_cost < (*thread_data->path)->cost)
             {
+                found_min = 1;
                 // set current thread as the path owner (can modify path->nodes)
                 (*thread_data->path_owner) = thread_data->id_thread;
                 // updating path cost, and additional info
@@ -352,7 +354,7 @@ void *thread_search_path(void *args)
             pthread_mutex_unlock(thread_data->lock_condition);
 
             // check if current thread is still the owner of the lock
-            if ((*thread_data->path_owner) == thread_data->id_thread)
+            if ((*thread_data->path_owner) == thread_data->id_thread && found_min)
             {
                 // acquire path lock
                 pthread_mutex_lock(thread_data->lock_path);
@@ -363,7 +365,7 @@ void *thread_search_path(void *args)
                 fprintf(stdout, "---STACK Destroy---\n");
                 (*thread_data->path)->nodes = stack_create();
                 fprintf(stdout, "---STACK Creation2---\n");
-                // Check allocation was successful
+                //  Check allocation was successful
                 util_check_r((*thread_data->path)->nodes != NULL, "Could not allocate path's stack, returning...\n", 0);
 
                 // check that current thread can modify the path (another thread has found a better solution)
@@ -397,7 +399,7 @@ void *thread_search_path(void *args)
 
             recipent = compute_recipient(e->dest, thread_data->n_thread);
 
-            fprintf(stdout, "Thread %d send message to %d\n", thread_data->id_thread, recipent);
+            fprintf(stdout, "Thread %d send message to %d from node with id %d to node with id %d with cost %d\n", thread_data->id_thread, recipent, min_node->id, e->dest->id, new_true_cost);
             pthread_mutex_lock(thread_data->cond_v_mutex);
             message_queue_send(thread_data->msg_q, (void *)msg_data_send, recipent);
             pthread_cond_signal(thread_data->cond_variables[recipent]);
@@ -406,8 +408,8 @@ void *thread_search_path(void *args)
             e = e->next;
         }
 
-        //util_free(data);
-        // util_free(msg_data_rcv);
+        // util_free(data);
+        //  util_free(msg_data_rcv);
     }
 
     pthread_exit(NULL);

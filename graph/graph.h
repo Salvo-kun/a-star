@@ -54,7 +54,7 @@ struct vertex_s
   If nThreads > 1, it will be used a parallel version of graph_create.
   Returns NULL if an error occurs, the graph pointer otherwise.
 */
-extern graph_t *graph_create(char *filename, void *(*readData)(char *));
+extern graph_t *graph_create(char *filename, void *(*readData)(char *, int *));
 
 /*
   Finds a node inside the graph given its id. If the node is not found, its pointer is set to NULL.
