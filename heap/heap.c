@@ -80,6 +80,31 @@ int heap_insert(heap_t *heap, int key, void *data, int priority)
   return 1;
 }
 
+extern int heap_peek(heap_t *heap, void **data, int *key)
+{
+  link_t node;
+
+  // Check heap and internal array are not null before starting
+  util_check_r(heap != NULL, "Heap cannot be null, returning...\n", 0);
+  util_check_r(heap->nodes != NULL, "Heap nodes cannot be null, returning...\n", 0);
+
+  // Check internal array is not empty
+  util_check_r(!heap_is_empty(heap), "Heap nodes must be non-empty, returning...\n", 0);
+
+#if DEBUG
+  fprintf(stdout, "Peeking root node with key %d and priority %d...\n", heap->nodes[0]->key, heap->nodes[0]->priority);
+#endif
+  node = heap->nodes[0];
+
+  if (data != NULL)
+    *data = node->data;
+
+  if (key != NULL)
+    *key = node->key;
+
+  return 1;
+}
+
 int heap_find(heap_t *heap, int key, int **position)
 {
   // Check heap is not null before starting

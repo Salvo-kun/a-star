@@ -5,7 +5,6 @@ int main(int argc, char *argv[])
 {
   graph_t *g;
   vertex_t *src;
-  int i;
 
   util_check_m(argc >= 3, "missing parameter.");
   g = graph_create(argv[1], NULL);

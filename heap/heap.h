@@ -24,6 +24,12 @@ extern heap_t *heap_create(int type, int size);
 extern int heap_insert(heap_t *heap, int key, void *data, int priority);
 
 /*
+  Allows to peek at the root of the heap without extracting it.
+  Returns 0 if an error occurs, 1 otherwise.
+*/
+extern int heap_peek(heap_t *heap, void **data, int *key);
+
+/*
   Finds the position of a node inside the heap given its key. If no position is found, it is set to NULL.
   Returns 0 if an error occurs, 1 otherwise.
 */

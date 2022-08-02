@@ -102,7 +102,7 @@ void djikstraTest(char *filename, int srcId, int dstId, void *(*readData)(char *
 
     if (path != NULL)
     {
-        fprintf(stdout, "\nFound path with cost = %d and length = %d. Visited nodes = %d\n", path->cost, stack_count(path->nodes) - 1, path->visited_nodes);
+        fprintf(stdout, "\nFound path with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
 
         while (!stack_empty_m(path->nodes))
         {
@@ -156,7 +156,7 @@ void astarTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *
 
     if (path != NULL)
     {
-        fprintf(stdout, "\nFound path with cost = %d and length = %d. Visited nodes = %d\n", path->cost, stack_count(path->nodes) - 1, path->visited_nodes);
+        fprintf(stdout, "\nFound path with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
 
         while (!stack_empty_m(path->nodes))
         {
@@ -210,7 +210,7 @@ void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_
 
     if (path != NULL)
     {
-        fprintf(stdout, "\nFound path with cost = %d and length = %d. Visited nodes = %d\n", path->cost, stack_count(path->nodes) - 1, path->visited_nodes);
+        fprintf(stdout, "\nFound path with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
 
         while (!stack_empty_m(path->nodes))
         {
@@ -244,7 +244,7 @@ void cityGraphTest(char *filename, int srcId, int dstId)
 {
     // djikstraTest(filename, srcId, dstId, read_2d_data);
     // fprintf(stdout, "\n-------------------------\n");
-    astarTest(filename, srcId, dstId, heuristic, read_2d_data);
-    fprintf(stdout, "\n-------------------------\n");
+    // astarTest(filename, srcId, dstId, heuristic, read_2d_data);
+    // fprintf(stdout, "\n-------------------------\n");
     astarParTest(filename, srcId, dstId, heuristic, read_2d_data);
 }

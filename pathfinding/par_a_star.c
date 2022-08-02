@@ -2,48 +2,59 @@
 #include "pathfinding.h"
 #include "../msg_queue/msg_queue.h"
 
-struct thread_d
+// Data structures
+
+typedef struct thread_data_s
 {
+    // Pathfinding data
     graph_t *graph;
     vertex_t *src;
     vertex_t *dst;
     int (*heuristic)(vertex_t *, vertex_t *);
+
+    // Supporting ADT
     message_queue_t *msg_q;
-    int n_thread;  // number of threads running
-    int id_thread; // identifier/index of current thread
     heap_t *open_q;
     hash_table_t *closed_set;
     path_t **path;
 
-    pthread_mutex_t *lock_condition; // mutexes for path setting
-    pthread_mutex_t *lock_path;
-    int *path_owner; // owner of the lock_condition mutex
+    // Thread info and stats
+    int n_thread;
+    int id_thread;
+    int visited_nodes;
+    int revisited_nodes;
 
-    int *termination_flags; // flags use to detect the terminate condition
+    // Concurrency controls for path
+    pthread_mutex_t *path_lock;
 
+    // Concurrency controls for termination
     pthread_cond_t **cond_variables;
     pthread_mutex_t *cond_v_mutex;
-
+    int *termination_flags;
     int *terminate_counter;
     int *program_terminated;
-};
+} thread_data_t;
 
-struct msg_data
+typedef struct msg_data_s
 {
     vertex_t *n;
     vertex_t *n_successor;
     int true_cost;
-};
+} msg_data_t;
 
-int terminate_detection(struct thread_d *data);
+// Private methods prototypes
+
+int terminate_detection(thread_data_t *data);
 int compute_recipient(vertex_t *v, int n);
 void *thread_search_path(void *args);
 
+// Public methods
+
 int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristic)(vertex_t *, vertex_t *), path_t **path, int n_threads_to_use)
 {
-    int i, result, terminate_counter = 0, program_terminated = 0;
-    int path_owner = -1;
-    printf("ASTAR PATH PAR\n");
+    int i, result, terminate_counter = 0, program_terminated = 0, first_recipient;
+
+    fprintf(stdout, "ASTAR PATH PAR\n");
 
     // Check parameters are not null before starting
     util_check_r(graph != NULL, "Graph cannot be null, returning...\n", 0);
@@ -51,70 +62,66 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
     util_check_r(dst != NULL, "Destination nodes cannot be null, returning...\n", 0);
 
     message_queue_t *msg_q = message_queue_create(n_threads_to_use);
+    util_check_r(msg_q != NULL, "Could not allocate message queue, returning...\n", 0);
 
     pthread_t *threads = (pthread_t *)util_malloc(n_threads_to_use * sizeof(pthread_t));
     util_check_r(threads != NULL, "Could not allocate threads, returning...\n", 0);
 
-    struct thread_d *thread_data = (struct thread_d *)util_malloc(n_threads_to_use * sizeof(struct thread_d));
+    thread_data_t *thread_data = (thread_data_t *)util_malloc(n_threads_to_use * sizeof(thread_data_t));
     util_check_r(thread_data != NULL, "Could not allocate thread_data, returning...\n", 0);
 
     heap_t **open_q = (heap_t **)util_malloc(n_threads_to_use * sizeof(heap_t *));
-    util_check_r(thread_data != NULL, "Could not allocate array open set, returning...\n", 0);
+    util_check_r(open_q != NULL, "Could not allocate array of open sets, returning...\n", 0);
 
     hash_table_t **closed_set = (hash_table_t **)util_malloc(n_threads_to_use * sizeof(hash_table_t *));
-    util_check_r(thread_data != NULL, "Could not allocate array of close set, returning...\n", 0);
+    util_check_r(closed_set != NULL, "Could not allocate array of closed sets, returning...\n", 0);
 
-    pthread_mutex_t *lock_condition = (pthread_mutex_t *)util_malloc(sizeof(pthread_mutex_t));
-    util_check_r(lock_condition != NULL, "Could not allocate condition mutex, returning...\n", 0);
-    util_check_r(pthread_mutex_init(lock_condition, NULL) == 0, "Could not initialized condition mutex, returning...\n", 0);
-
-    pthread_mutex_t *lock_path = (pthread_mutex_t *)util_malloc(sizeof(pthread_mutex_t));
-    util_check_r(lock_path != NULL, "Could not allocate path mutex, returning...\n", 0);
-    util_check_r(pthread_mutex_init(lock_path, NULL) == 0, "Could not initialized path mutex, returning...\n", 0);
+    pthread_mutex_t *path_lock = (pthread_mutex_t *)util_malloc(sizeof(pthread_mutex_t));
+    util_check_r(path_lock != NULL, "Could not allocate path mutex, returning...\n", 0);
+    util_check_r(pthread_mutex_init(path_lock, NULL) == 0, "Could not initialize path mutex, returning...\n", 0);
 
     *path = (path_t *)util_malloc(sizeof(path_t));
-    // Check allocation was successful
     util_check_r(path != NULL, "Could not allocate path, returning...\n", 0);
-    (*path)->nodes = stack_create();
-    fprintf(stdout, "---STACK Creation---\n");
-    //  Check allocation was successful
-    util_check_r((*path)->nodes != NULL, "Could not allocate path's stack, returning...\n", 0);
-    // incumbent cost initialized to infinite
+
     (*path)->cost = INT_MAX;
     (*path)->visited_nodes = 0;
     (*path)->revisited_nodes = 0;
+    (*path)->nodes = stack_create();
+    util_check_r((*path)->nodes != NULL, "Could not allocate path's stack, returning...\n", 0);
 
     int *termination_flags = (int *)util_calloc(n_threads_to_use, sizeof(int));
+    util_check_r(termination_flags != NULL, "Could not allocate termination flags, returning...\n", 0);
 
     pthread_cond_t **cond_variables = (pthread_cond_t **)util_malloc(n_threads_to_use * sizeof(pthread_cond_t *));
     util_check_r(cond_variables != NULL, "Could not allocate condition variables vector, returning...\n", 0);
 
     pthread_mutex_t *cond_v_mutex = (pthread_mutex_t *)util_malloc(n_threads_to_use * sizeof(pthread_mutex_t));
     util_check_r(cond_v_mutex != NULL, "Could not allocate condition variable mutex vector, returning...\n", 0);
+    util_check_r(pthread_mutex_init(cond_v_mutex, NULL) == 0, "Could not initialize condition variable mutex, returning...\n", 0);
 
-    util_check_r(pthread_mutex_init(cond_v_mutex, NULL) == 0, "Could not initialized condition variable mutex, returning...\n", 0);
-
-    printf("Creating %d threads\n", n_threads_to_use);
+    fprintf(stdout, "Creating %d threads\n", n_threads_to_use);
 
     for (i = 0; i < n_threads_to_use; i++)
     {
         cond_variables[i] = (pthread_cond_t *)util_malloc(sizeof(pthread_cond_t));
         util_check_r(cond_variables[i] != NULL, "Could not allocate condition variable, returning...\n", 0);
-        util_check_r(pthread_cond_init(cond_variables[i], NULL) == 0, "Could not initialized condition variable, returning...\n", 0);
+        util_check_r(pthread_cond_init(cond_variables[i], NULL) == 0, "Could not initialize condition variable, returning...\n", 0);
     }
+
+    first_recipient = compute_recipient(src, n_threads_to_use);
 
     for (i = 0; i < n_threads_to_use; i++)
     {
         thread_data[i].graph = graph;
         thread_data[i].src = src;
         thread_data[i].dst = dst;
+        thread_data[i].visited_nodes = 0;
+        thread_data[i].revisited_nodes = 0;
         thread_data[i].heuristic = heuristic;
         thread_data[i].msg_q = msg_q;
         thread_data[i].n_thread = n_threads_to_use;
         thread_data[i].id_thread = i;
-        thread_data[i].lock_condition = lock_condition;
-        thread_data[i].lock_path = lock_path;
-        thread_data[i].path_owner = &path_owner;
+        thread_data[i].path_lock = path_lock;
         thread_data[i].termination_flags = termination_flags;
         thread_data[i].cond_v_mutex = cond_v_mutex;
         thread_data[i].cond_variables = cond_variables;
@@ -135,7 +142,7 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
 
         thread_data[i].path = path;
 
-        if (compute_recipient(src, n_threads_to_use) == i)
+        if (first_recipient == i)
         {
             // Init open with source
             fprintf(stdout, "src node with id %d assigned to thread %d\n", src->id, i);
@@ -150,10 +157,14 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
     for (i = 0; i < n_threads_to_use; i++)
     {
         pthread_join(threads[i], NULL);
+
+        // Copy stats back
+        (*path)->visited_nodes += thread_data[i].visited_nodes;
+        (*path)->revisited_nodes += thread_data[i].revisited_nodes;
+
         hash_table_destroy(closed_set[i], NULL);
         heap_destroy(open_q[i], NULL);
         pthread_cond_destroy(cond_variables[i]);
-
         util_free(cond_variables[i]);
     }
 
@@ -164,40 +175,46 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
         *path = NULL;
         return 1;
     }
+    else
+    {
+        // Path found, push nodes from the end
+        vertex_t *n = thread_data->dst;
+        // check that current thread can modify the path (another thread has found a better solution)
+        while (n != NULL)
+        {
+            result = stack_push((*path)->nodes, (void *)&(n->id));
+            // Check no errors occurred
+            util_check_r(result, "Could not insert in the path's stack, returning...\n", 0);
+            n = n->parent;
+        }
+    }
 
     util_free(cond_variables);
     util_free(termination_flags);
-    pthread_mutex_destroy(lock_condition);
-    util_free(lock_condition);
-    pthread_mutex_destroy(lock_path);
-    util_free(lock_path);
+    pthread_mutex_destroy(path_lock);
+    util_free(path_lock);
     util_free(open_q);
     util_free(closed_set);
     util_free(thread_data);
     util_free(threads);
     message_queue_destroy(msg_q, NULL);
+
     return 1;
 }
 
+// Private methods
+
 void *thread_search_path(void *args)
 {
-    int visited_nodes = 0, revisited_nodes = 0, result, open_is_empty;
-    struct thread_d *thread_data = (struct thread_d *)args;
+    int result, open_is_empty;
+    thread_data_t *thread_data = (thread_data_t *)args;
     vertex_t *data, *min_node;
-    struct msg_data *msg_data_rcv, *msg_data_send;
+    msg_data_t *msg_data_rcv, *msg_data_send;
 
     while (terminate_detection(thread_data))
     {
         min_node = NULL;
         msg_data_send = NULL;
-
-        msg_data_send = (struct msg_data *)util_malloc(sizeof(struct msg_data));
-        // Check allocation was successful
-        util_check_r(msg_data_send != NULL, "Could not allocate struct message to receive data, returning...\n", 0);
-
-        min_node = (vertex_t *)util_malloc(sizeof(vertex_t));
-        // Check allocation was successful
-        util_check_r(min_node != NULL, "Could not allocate data to extract from closed set, returning...\n", 0);
 
         // check if thread message queue is empty
         while (message_queue_count(thread_data->msg_q, thread_data->id_thread) != 0)
@@ -205,7 +222,7 @@ void *thread_search_path(void *args)
             data = NULL;
             msg_data_rcv = NULL;
 
-            msg_data_rcv = (struct msg_data *)util_malloc(sizeof(struct msg_data));
+            msg_data_rcv = (msg_data_t *)util_malloc(sizeof(msg_data_t));
             //  Check allocation was successful
             util_check_r(msg_data_rcv != NULL, "Could not allocate struct message to receive data, returning...\n", 0);
 
@@ -243,12 +260,10 @@ void *thread_search_path(void *args)
                     // Check no errors occurred
                     util_check_r(result, "Could not insert in the open set, returning...\n", 0);
 
-                    revisited_nodes++;
+                    thread_data->revisited_nodes++;
                 }
                 else
                 {
-                    // util_free(data);
-                    // util_free(msg_data_rcv);
                     continue;
                 }
             }
@@ -275,9 +290,6 @@ void *thread_search_path(void *args)
                 }
                 else if (msg_data_rcv->true_cost >= msg_data_rcv->n_successor->true_cost)
                 {
-                    // util_free(data);
-                    //  util_free(msg_data_rcv);
-                    //  util_free(position);
                     continue;
                 }
                 else
@@ -288,14 +300,14 @@ void *thread_search_path(void *args)
                     // Check no errors occurred
                     util_check_r(result, "Could not update in the open set, returning...\n", 0);
                 }
-
-                // util_free(position);
             }
 
             fprintf(stdout, "Thread %d | Updating costs and parent for node with id %d to open set\n", thread_data->id_thread, msg_data_rcv->n_successor->id);
             msg_data_rcv->n_successor->true_cost = msg_data_rcv->true_cost;
             msg_data_rcv->n_successor->heuristic_cost = heuristic_cost;
             msg_data_rcv->n_successor->parent = msg_data_rcv->n;
+
+            util_free(msg_data_rcv);
         }
 
         open_is_empty = heap_is_empty(thread_data->open_q);
@@ -304,81 +316,55 @@ void *thread_search_path(void *args)
         if (!open_is_empty)
         {
             fprintf(stdout, "Thread %d | Extracting data from open set\n", thread_data->id_thread);
-            result = heap_extract(thread_data->open_q, (void *)&min_node, NULL);
+
+            min_node = (vertex_t *)util_malloc(sizeof(vertex_t));
+            // Check allocation was successful
+            util_check_r(min_node != NULL, "Could not allocate data to extract from closed set, returning...\n", 0);
+
+            result = heap_peek(thread_data->open_q, (void *)&min_node, NULL);
             // Check no errors occurred
-            util_check_r(result, "Could not extract from the open set, returning...\n", 0);
+            util_check_r(result, "Could not peek into the open set, returning...\n", 0);
         }
 
         if (open_is_empty || (min_node->true_cost + min_node->heuristic_cost) >= (*thread_data->path)->cost)
         {
             thread_data->termination_flags[thread_data->id_thread] = 1;
-            if (!open_is_empty)
-            {
-                heap_insert(thread_data->open_q, min_node->id, min_node, min_node->true_cost + min_node->heuristic_cost);
-            }
             continue;
         }
+
+        fprintf(stdout, "Thread %d | Extracting data from open set\n", thread_data->id_thread);
+
+        result = heap_extract(thread_data->open_q, (void *)&min_node, NULL);
+        // Check no errors occurred
+        util_check_r(result, "Could not extract from the open set, returning...\n", 0);
 
         fprintf(stdout, "Thread %d | Add node with id %d to closed set\n", thread_data->id_thread, min_node->id);
         result = hash_table_insert(thread_data->closed_set, min_node->id, (void *)min_node);
         // Check no errors occurred
         util_check_r(result, "Could not insert in the closed set, returning...\n", 0);
 
-        visited_nodes++;
+        thread_data->visited_nodes++;
 
         if (min_node->id == thread_data->dst->id)
         {
-            int found_min = 0;
-            fprintf(stdout, "Thread %d | arrived to goal node with id %d\n", thread_data->id_thread, min_node->id);
+            fprintf(stdout, "Thread %d | Arrived to goal node with id %d\n", thread_data->id_thread, min_node->id);
 
             // acquire lock for checking condition
-            pthread_mutex_lock(thread_data->lock_condition);
+            pthread_mutex_lock(thread_data->path_lock);
             if (min_node->true_cost < (*thread_data->path)->cost)
             {
-                found_min = 1;
-                // set current thread as the path owner (can modify path->nodes)
-                (*thread_data->path_owner) = thread_data->id_thread;
-                // updating path cost, and additional info
                 (*thread_data->path)->cost = min_node->true_cost;
-                (*thread_data->path)->visited_nodes += visited_nodes;
-                visited_nodes = 0;
-                (*thread_data->path)->revisited_nodes += revisited_nodes;
-                revisited_nodes = 0;
             }
             // unlock mutex
-            pthread_mutex_unlock(thread_data->lock_condition);
-
-            // check if current thread is still the owner of the lock
-            if ((*thread_data->path_owner) == thread_data->id_thread && found_min)
-            {
-                // acquire path lock
-                pthread_mutex_lock(thread_data->lock_path);
-
-                vertex_t *n = thread_data->dst;
-                // destroy previous path and create a new one
-                stack_destroy((*thread_data->path)->nodes, NULL);
-                (*thread_data->path)->nodes = stack_create();
-                //  Check allocation was successful
-                util_check_r((*thread_data->path)->nodes != NULL, "Could not allocate path's stack, returning...\n", 0);
-
-                // check that current thread can modify the path (another thread has found a better solution)
-                while (n != NULL && (*thread_data->path_owner) == thread_data->id_thread)
-                {
-                    result = stack_push((*thread_data->path)->nodes, (void *)&(n->id));
-                    // Check no errors occurred
-                    util_check_r(result, "Could not insert in the path's stack, returning...\n", 0);
-                    n = n->parent;
-                }
-                pthread_mutex_unlock(thread_data->lock_path);
-            }
+            pthread_mutex_unlock(thread_data->path_lock);
         }
 
         edge_t *e = min_node->head;
 
         while (e != NULL)
         {
-            int recipent;
-            msg_data_send = (struct msg_data *)util_malloc(sizeof(struct msg_data));
+            int recipient;
+            msg_data_send = (msg_data_t *)util_malloc(sizeof(msg_data_t));
             // Check allocation was successful
             util_check_r(msg_data_send != NULL, "Could not allocate struct message to receive data, returning...\n", 0);
 
@@ -389,37 +375,25 @@ void *thread_search_path(void *args)
             msg_data_send->n = min_node;
             msg_data_send->n_successor = e->dest;
 
-            recipent = compute_recipient(e->dest, thread_data->n_thread);
+            recipient = compute_recipient(e->dest, thread_data->n_thread);
 
-            fprintf(stdout, "Thread %d | send message to %d from node with id %d to node with id %d with cost %d\n", thread_data->id_thread, recipent, min_node->id, e->dest->id, new_true_cost);
+            fprintf(stdout, "Thread %d | send message to %d from node with id %d to node with id %d with cost %d\n", thread_data->id_thread, recipient, min_node->id, e->dest->id, new_true_cost);
             pthread_mutex_lock(thread_data->cond_v_mutex);
-            message_queue_send(thread_data->msg_q, (void *)msg_data_send, recipent);
-            pthread_cond_signal(thread_data->cond_variables[recipent]);
+            message_queue_send(thread_data->msg_q, (void *)msg_data_send, recipient);
+            pthread_cond_signal(thread_data->cond_variables[recipient]);
             pthread_mutex_unlock(thread_data->cond_v_mutex);
 
             e = e->next;
         }
-
-        // util_free(data);
-        //  util_free(msg_data_rcv);
     }
 
     pthread_exit(NULL);
 }
 
-/**
- * @brief check the termination of the algorithm.
- *
- * @param msg_q is the message queue
- * @param termination_flags is the array of flags
- * @param n_flags is the size of the termination_flags array
- * @return int 0 if the termination condition occurs, otherwise return 1
- */
-int terminate_detection(struct thread_d *data)
+int terminate_detection(thread_data_t *data)
 {
-    int i;
-
     pthread_mutex_lock(data->cond_v_mutex);
+
     // while my message queue is empty and my open queue is not useful/empty i sleep check that I'm not the last one to go sleep
     while (data->termination_flags[data->id_thread] && message_queue_count(data->msg_q, data->id_thread) == 0 && !(*data->program_terminated))
     {
@@ -430,7 +404,7 @@ int terminate_detection(struct thread_d *data)
             (*data->program_terminated) = 1;
 
             fprintf(stdout, "--- Thread %d termination detected waking all ---\n", data->id_thread);
-            for (i = 0; i < data->n_thread; i++)
+            for (int i = 0; i < data->n_thread; i++)
             {
                 pthread_cond_signal(data->cond_variables[i]);
             }
@@ -456,6 +430,7 @@ int terminate_detection(struct thread_d *data)
         fprintf(stdout, "---Terminating thread %d---\n", data->id_thread);
         return 0;
     }
+
     return 1;
 }
 
