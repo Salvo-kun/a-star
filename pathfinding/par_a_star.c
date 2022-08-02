@@ -218,7 +218,7 @@ void *thread_search_path(void *args)
 
             // Get and remove from message queue a triplet (n_successor, g(n) + c(n, n_successor), n);
             message_queue_receive(thread_data->msg_q, (void **)&msg_data_rcv, thread_data->id_thread);
-            fprintf(stdout, "Thread %d received message from node %d to node %d with cost %d\n", thread_data->id_thread, msg_data_rcv->n->id, msg_data_rcv->n_successor->id, msg_data_rcv->true_cost);
+            fprintf(stdout, "Thread %d |received message from node %d to node %d with cost %d\n", thread_data->id_thread, msg_data_rcv->n->id, msg_data_rcv->n_successor->id, msg_data_rcv->true_cost);
 
             result = hash_table_get(thread_data->closed_set, msg_data_rcv->n_successor->id, (void **)&data);
 
@@ -229,10 +229,10 @@ void *thread_search_path(void *args)
 
             if (data != NULL)
             {
-                fprintf(stdout, "%d | Node with id %d already in closed set\n", thread_data->id_thread, msg_data_rcv->n_successor->id);
+                fprintf(stdout, "Thread %d | Node with id %d already in closed set\n", thread_data->id_thread, msg_data_rcv->n_successor->id);
                 if (msg_data_rcv->true_cost < msg_data_rcv->n_successor->true_cost)
                 {
-                    fprintf(stdout, "%d | Found smaller cost for node with id %d, readding it to open set\n", thread_data->id_thread, msg_data_rcv->n_successor->id);
+                    fprintf(stdout, "Thread %d | Found smaller cost for node with id %d, readding it to open set\n", thread_data->id_thread, msg_data_rcv->n_successor->id);
                     result = hash_table_delete(thread_data->closed_set, msg_data_rcv->n_successor->id);
 
                     // Check no errors occurred
@@ -247,8 +247,6 @@ void *thread_search_path(void *args)
                 }
                 else
                 {
-                    fprintf(stdout, "%d | Skipping\n", thread_data->id_thread);
-
                     // util_free(data);
                     // util_free(msg_data_rcv);
                     continue;
@@ -256,7 +254,7 @@ void *thread_search_path(void *args)
             }
             else
             {
-                fprintf(stdout, "%d | Node with id %d not in closed set\n", thread_data->id_thread, msg_data_rcv->n_successor->id);
+                fprintf(stdout, "Thread %d | Node with id %d not in closed set\n", thread_data->id_thread, msg_data_rcv->n_successor->id);
 
                 int *position = (int *)util_malloc(sizeof(int));
 
@@ -270,15 +268,13 @@ void *thread_search_path(void *args)
 
                 if (position == NULL)
                 {
-                    fprintf(stdout, "%d | Add node with id %d to open set with cost %d\n", thread_data->id_thread, msg_data_rcv->n_successor->id, msg_data_rcv->true_cost + heuristic_cost);
+                    fprintf(stdout, "Thread %d | Add node with id %d to open set with cost %d\n", thread_data->id_thread, msg_data_rcv->n_successor->id, msg_data_rcv->true_cost + heuristic_cost);
                     result = heap_insert(thread_data->open_q, msg_data_rcv->n_successor->id, (void *)(msg_data_rcv->n_successor), msg_data_rcv->true_cost + heuristic_cost);
                     // Check no errors occurred
                     util_check_r(result, "Could not insert in the open set, returning...\n", 0);
                 }
                 else if (msg_data_rcv->true_cost >= msg_data_rcv->n_successor->true_cost)
                 {
-                    fprintf(stdout, "%d | Skipping\n", thread_data->id_thread);
-
                     // util_free(data);
                     //  util_free(msg_data_rcv);
                     //  util_free(position);
@@ -286,7 +282,7 @@ void *thread_search_path(void *args)
                 }
                 else
                 {
-                    fprintf(stdout, "%d | Updating node with id %d to open set with new cost %d\n", thread_data->id_thread, msg_data_rcv->n_successor->id, msg_data_rcv->true_cost + heuristic_cost);
+                    fprintf(stdout, "Thread %d | Updating node with id %d to open set with new cost %d\n", thread_data->id_thread, msg_data_rcv->n_successor->id, msg_data_rcv->true_cost + heuristic_cost);
                     result = heap_update(thread_data->open_q, msg_data_rcv->n_successor->id, msg_data_rcv->true_cost + heuristic_cost);
 
                     // Check no errors occurred
@@ -296,18 +292,18 @@ void *thread_search_path(void *args)
                 // util_free(position);
             }
 
-            fprintf(stdout, "Updating costs and parent for node with id %d to open set\n", msg_data_rcv->n_successor->id);
+            fprintf(stdout, "Thread %d | Updating costs and parent for node with id %d to open set\n", thread_data->id_thread, msg_data_rcv->n_successor->id);
             msg_data_rcv->n_successor->true_cost = msg_data_rcv->true_cost;
             msg_data_rcv->n_successor->heuristic_cost = heuristic_cost;
             msg_data_rcv->n_successor->parent = msg_data_rcv->n;
         }
 
         open_is_empty = heap_is_empty(thread_data->open_q);
-        fprintf(stdout, "Thread %d, Heap is %s empty\n", thread_data->id_thread, open_is_empty ? "" : "not");
+        fprintf(stdout, "Thread %d | Heap is %s empty\n", thread_data->id_thread, open_is_empty ? "" : "not");
 
         if (!open_is_empty)
         {
-            fprintf(stdout, "%d | Extracting data from open set\n", thread_data->id_thread);
+            fprintf(stdout, "Thread %d | Extracting data from open set\n", thread_data->id_thread);
             result = heap_extract(thread_data->open_q, (void *)&min_node, NULL);
             // Check no errors occurred
             util_check_r(result, "Could not extract from the open set, returning...\n", 0);
@@ -320,11 +316,10 @@ void *thread_search_path(void *args)
             {
                 heap_insert(thread_data->open_q, min_node->id, min_node, min_node->true_cost + min_node->heuristic_cost);
             }
-            // sleep(1);
             continue;
         }
 
-        fprintf(stdout, "%d | Add node with id %d to closed set\n", thread_data->id_thread, min_node->id);
+        fprintf(stdout, "Thread %d | Add node with id %d to closed set\n", thread_data->id_thread, min_node->id);
         result = hash_table_insert(thread_data->closed_set, min_node->id, (void *)min_node);
         // Check no errors occurred
         util_check_r(result, "Could not insert in the closed set, returning...\n", 0);
@@ -334,7 +329,7 @@ void *thread_search_path(void *args)
         if (min_node->id == thread_data->dst->id)
         {
             int found_min = 0;
-            fprintf(stdout, "thread %d arrived to goal node with id %d\n", thread_data->id_thread, min_node->id);
+            fprintf(stdout, "Thread %d | arrived to goal node with id %d\n", thread_data->id_thread, min_node->id);
 
             // acquire lock for checking condition
             pthread_mutex_lock(thread_data->lock_condition);
@@ -362,16 +357,13 @@ void *thread_search_path(void *args)
                 vertex_t *n = thread_data->dst;
                 // destroy previous path and create a new one
                 stack_destroy((*thread_data->path)->nodes, NULL);
-                fprintf(stdout, "---STACK Destroy---\n");
                 (*thread_data->path)->nodes = stack_create();
-                fprintf(stdout, "---STACK Creation2---\n");
                 //  Check allocation was successful
                 util_check_r((*thread_data->path)->nodes != NULL, "Could not allocate path's stack, returning...\n", 0);
 
                 // check that current thread can modify the path (another thread has found a better solution)
                 while (n != NULL && (*thread_data->path_owner) == thread_data->id_thread)
                 {
-                    fprintf(stdout, "---STACK Pushing---\n");
                     result = stack_push((*thread_data->path)->nodes, (void *)&(n->id));
                     // Check no errors occurred
                     util_check_r(result, "Could not insert in the path's stack, returning...\n", 0);
@@ -390,7 +382,7 @@ void *thread_search_path(void *args)
             // Check allocation was successful
             util_check_r(msg_data_send != NULL, "Could not allocate struct message to receive data, returning...\n", 0);
 
-            fprintf(stdout, "%d | Checking edge from node with id %d to node with id %d\n", thread_data->id_thread, min_node->id, e->dest->id);
+            fprintf(stdout, "Thread %d | Checking edge from node with id %d to node with id %d\n", thread_data->id_thread, min_node->id, e->dest->id);
             int new_true_cost = min_node->true_cost + e->weight;
 
             msg_data_send->true_cost = new_true_cost;
@@ -399,7 +391,7 @@ void *thread_search_path(void *args)
 
             recipent = compute_recipient(e->dest, thread_data->n_thread);
 
-            fprintf(stdout, "Thread %d send message to %d from node with id %d to node with id %d with cost %d\n", thread_data->id_thread, recipent, min_node->id, e->dest->id, new_true_cost);
+            fprintf(stdout, "Thread %d | send message to %d from node with id %d to node with id %d with cost %d\n", thread_data->id_thread, recipent, min_node->id, e->dest->id, new_true_cost);
             pthread_mutex_lock(thread_data->cond_v_mutex);
             message_queue_send(thread_data->msg_q, (void *)msg_data_send, recipent);
             pthread_cond_signal(thread_data->cond_variables[recipent]);
@@ -427,17 +419,6 @@ int terminate_detection(struct thread_d *data)
 {
     int i;
 
-    // no condition variable solution
-
-    // for (int i = 0; i < n_flags; i++)
-    //     if (termination_flags[i] == 0)
-    //         return 1;
-
-    // if (message_queue_all_empty(msg_q))
-    //     return 0;
-
-    // return 1;
-
     pthread_mutex_lock(data->cond_v_mutex);
     // while my message queue is empty and my open queue is not useful/empty i sleep check that I'm not the last one to go sleep
     while (data->termination_flags[data->id_thread] && message_queue_count(data->msg_q, data->id_thread) == 0 && !(*data->program_terminated))
@@ -448,7 +429,7 @@ int terminate_detection(struct thread_d *data)
             // last thread that will go sleep instead set program_terminated and wake up all others
             (*data->program_terminated) = 1;
 
-            fprintf(stdout, "---Termination detected Waking all %d---\n", data->id_thread);
+            fprintf(stdout, "--- Thread %d termination detected waking all ---\n", data->id_thread);
             for (i = 0; i < data->n_thread; i++)
             {
                 pthread_cond_signal(data->cond_variables[i]);
@@ -465,8 +446,6 @@ int terminate_detection(struct thread_d *data)
             (*data->terminate_counter) -= 1;
 
             fprintf(stdout, "---Bonjour, Thread %d---\n", data->id_thread);
-
-            // else
         }
     }
 

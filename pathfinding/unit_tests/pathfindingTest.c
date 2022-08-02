@@ -16,9 +16,9 @@ int heuristic(vertex_t *a, vertex_t *b);
 void *read_2d_data(char *line, int *id);
 void smallGraphTest(char *filename, int srcId, int dstId);
 void cityGraphTest(char *filename, int srcId, int dstId);
-void djikstraTest(char *filename, int srcId, int dstId, void *(*readData)(char *));
-void astarTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *, vertex_t *), void *(*readData)(char *));
-void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *, vertex_t *), void *(*readData)(char *));
+void djikstraTest(char *filename, int srcId, int dstId, void *(*readData)(char *, int *));
+void astarTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *, vertex_t *), void *(*readData)(char *, int *));
+void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *, vertex_t *), void *(*readData)(char *, int *));
 
 int main(int argc, char **argv)
 {
@@ -71,7 +71,7 @@ void *read_2d_data(char *line, int *id)
     return (void *)data;
 }
 
-void djikstraTest(char *filename, int srcId, int dstId, void *(*readData)(char *))
+void djikstraTest(char *filename, int srcId, int dstId, void *(*readData)(char *, int *))
 {
     graph_t *g;
     vertex_t *src, *dst;
@@ -125,7 +125,7 @@ void djikstraTest(char *filename, int srcId, int dstId, void *(*readData)(char *
     fprintf(stdout, "\n\n");
 }
 
-void astarTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *, vertex_t *), void *(*readData)(char *))
+void astarTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *, vertex_t *), void *(*readData)(char *, int *))
 {
     graph_t *g;
     vertex_t *src, *dst;
@@ -179,7 +179,7 @@ void astarTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *
     fprintf(stdout, "\n\n");
 }
 
-void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *, vertex_t *), void *(*readData)(char *))
+void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *, vertex_t *), void *(*readData)(char *, int *))
 {
     graph_t *g;
     vertex_t *src, *dst;
@@ -206,7 +206,7 @@ void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_
 
     fprintf(stdout, "A*\n\n");
 
-    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, 2);
+    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, 6);
 
     if (path != NULL)
     {
@@ -243,8 +243,8 @@ void smallGraphTest(char *filename, int srcId, int dstId)
 void cityGraphTest(char *filename, int srcId, int dstId)
 {
     // djikstraTest(filename, srcId, dstId, read_2d_data);
-    fprintf(stdout, "\nZAMPA\n");
-    // astarTest(filename, srcId, dstId, heuristic, read_2d_data);
-    fprintf(stdout, "\nZAMPA\n");
+    // fprintf(stdout, "\n-------------------------\n");
+    astarTest(filename, srcId, dstId, heuristic, read_2d_data);
+    fprintf(stdout, "\n-------------------------\n");
     astarParTest(filename, srcId, dstId, heuristic, read_2d_data);
 }
