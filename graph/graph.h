@@ -36,6 +36,7 @@ struct vertex_s
   int id;
   int true_cost;
   int heuristic_cost;
+  unsigned int hash;
   void *data;
   vertex_t *parent;
   edge_t *head;

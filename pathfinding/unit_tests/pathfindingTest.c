@@ -10,6 +10,7 @@ struct coord_2d_s
 {
     int x;
     int y;
+    int hash;
 };
 
 int heuristic(vertex_t *a, vertex_t *b);
@@ -51,7 +52,7 @@ int main(int argc, char **argv)
 
 int heuristic(vertex_t *a, vertex_t *b)
 {
-    //fprintf(stdout, "Start (%d) %d %d, End (%d) %d %d\n", a->id, ((coord_2d_t *)a->data)->x, ((coord_2d_t *)a->data)->y, b->id, ((coord_2d_t *)b->data)->x, ((coord_2d_t *)b->data)->y);
+    // fprintf(stdout, "Start (%d) %d %d, End (%d) %d %d\n", a->id, ((coord_2d_t *)a->data)->x, ((coord_2d_t *)a->data)->y, b->id, ((coord_2d_t *)b->data)->x, ((coord_2d_t *)b->data)->y);
     return abs(((coord_2d_t *)a->data)->x - ((coord_2d_t *)b->data)->x) + abs(((coord_2d_t *)a->data)->y - ((coord_2d_t *)b->data)->y);
 }
 
@@ -67,6 +68,7 @@ void *read_2d_data(char *line, int *id)
 
     data->x = x;
     data->y = y;
+    data->hash = 0;
 
     return (void *)data;
 }
@@ -206,7 +208,7 @@ void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_
 
     fprintf(stdout, "A*\n\n");
 
-    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, 6);
+    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, 4);
 
     if (path != NULL)
     {
@@ -244,7 +246,7 @@ void cityGraphTest(char *filename, int srcId, int dstId)
 {
     // djikstraTest(filename, srcId, dstId, read_2d_data);
     // fprintf(stdout, "\n-------------------------\n");
-    // astarTest(filename, srcId, dstId, heuristic, read_2d_data);
+    astarTest(filename, srcId, dstId, heuristic, read_2d_data);
     // fprintf(stdout, "\n-------------------------\n");
     astarParTest(filename, srcId, dstId, heuristic, read_2d_data);
 }
