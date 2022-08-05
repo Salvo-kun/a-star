@@ -19,6 +19,16 @@ void init_zobrist(zobrist_t *k)
     }
 }
 
+void init_mult_hash(mult_hash_t *m, int modul)
+{
+    m->p = INT_MAX;
+    // random number (1, p-1)
+    m->a = (rand() % (m->p - 2)) + 1;
+    // random number (0, p-1)
+    m->b = rand() % (m->p - 1);
+    m->m = modul;
+}
+
 int abstraction(int state)
 {
     return state % MAX_ZOBRIST_LENGTH;
@@ -34,4 +44,15 @@ int hash_zobrist(unsigned int hash_old_state, int state, unsigned int *hash, zob
     *hash = k->hashtab[abstraction(state)][0] ^ hash_old_state;
 
     return 0;
+}
+/*
+modulus hash function
+    h(c) = ((ac + b) mod p)mod m
+*/
+int hash_mult(int state, mult_hash_t *m)
+{
+    unsigned int ac = m->a * state;
+    ac += m->b;
+    printf("ac + b = %u\n", ac);
+    return ((ac % m->p) % m->m);
 }

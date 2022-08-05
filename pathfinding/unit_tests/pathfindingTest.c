@@ -246,7 +246,7 @@ void cityGraphTest(char *filename, int srcId, int dstId)
 {
     // djikstraTest(filename, srcId, dstId, read_2d_data);
     // fprintf(stdout, "\n-------------------------\n");
-    astarTest(filename, srcId, dstId, heuristic, read_2d_data);
+    // astarTest(filename, srcId, dstId, heuristic, read_2d_data);
     // fprintf(stdout, "\n-------------------------\n");
     astarParTest(filename, srcId, dstId, heuristic, read_2d_data);
 }

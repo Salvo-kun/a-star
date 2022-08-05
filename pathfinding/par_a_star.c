@@ -36,6 +36,7 @@ typedef struct thread_data_s
     int *program_terminated;
 
     zobrist_t *k;
+    mult_hash_t *m;
 
 } thread_data_t;
 
@@ -50,6 +51,7 @@ typedef struct msg_data_s
 
 int terminate_detection(thread_data_t *data);
 int compute_recipient(vertex_t *v, int n);
+int compute_hash_mult(vertex_t *v, mult_hash_t *m);
 void *thread_search_path(void *args);
 
 // Public methods
@@ -58,7 +60,9 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
 {
     int i, result, terminate_counter = 0, program_terminated = 0, first_recipient;
     zobrist_t k;
+    mult_hash_t m;
     init_zobrist(&k);
+    init_mult_hash(&m, n_threads_to_use);
     fprintf(stdout, "ASTAR PATH PAR\n");
 
     // Check parameters are not null before starting
@@ -135,6 +139,7 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
         thread_data[i].terminate_counter = &terminate_counter;
         thread_data[i].program_terminated = &program_terminated;
         thread_data[i].k = &k;
+        thread_data[i].m = &m;
 
         // Creates the priority queue which will contain unvisited nodes
         open_q[i] = heap_create(0, 10);
@@ -380,14 +385,17 @@ void *thread_search_path(void *args)
             int new_true_cost = min_node->true_cost + e->weight;
 
             // check if no errors
-            hash_zobrist(min_node->hash, e->dest->id, &e->dest->hash, thread_data->k);
+            // hash_zobrist(min_node->hash, e->dest->id, &e->dest->hash, thread_data->k);
             fprintf(stdout, "--THREAD %d CALCULATING THE ZOBRIST with newstate = %d and added node = %d ---\n", thread_data->id_thread, e->dest->hash, e->dest->id);
 
             msg_data_send->true_cost = new_true_cost;
             msg_data_send->n = min_node;
             msg_data_send->n_successor = e->dest;
 
-            recipient = compute_recipient(e->dest, thread_data->n_thread);
+            printf("MMMM -- %d %d %d\n", thread_data->m->a, thread_data->m->b, thread_data->m->p);
+            printf("computing hash mult %d\n", e->dest->id);
+
+            recipient = compute_hash_mult(e->dest, thread_data->m);
 
             fprintf(stdout, "Thread %d | send message to %d from node with id %d to node with id %d with cost %d\n", thread_data->id_thread, recipient, min_node->id, e->dest->id, new_true_cost);
             pthread_mutex_lock(thread_data->cond_v_mutex);
@@ -449,4 +457,9 @@ int terminate_detection(thread_data_t *data)
 int compute_recipient(vertex_t *v, int n)
 {
     return v->hash % n;
+}
+
+int compute_hash_mult(vertex_t *v, mult_hash_t *m)
+{
+    return hash_mult(v->id, m);
 }
