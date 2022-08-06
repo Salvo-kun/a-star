@@ -82,6 +82,12 @@ int seq_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
                 // Check no errors occurred
                 util_check_r(result, "Could not insert in the path's stack, returning...\n", 0);
 
+                if (n == src)
+                {
+                    // Avoid going backward.
+                    break;
+                }
+
                 n = n->parent;
             }
 

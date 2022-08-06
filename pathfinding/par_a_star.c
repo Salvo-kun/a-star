@@ -170,6 +170,7 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
     for (i = 0; i < n_threads_to_use; i++)
     {
         pthread_join(threads[i], NULL);
+        fprintf(stdout, "Joined thread %d\n", i);
 
         // Copy stats back
         (*path)->visited_nodes += thread_data[i].visited_nodes;
@@ -198,6 +199,13 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
             result = stack_push((*path)->nodes, (void *)&(n->id));
             // Check no errors occurred
             util_check_r(result, "Could not insert in the path's stack, returning...\n", 0);
+
+            if (n == thread_data->src)
+            {
+                // Avoid going backward.
+                break;
+            }
+
             n = n->parent;
         }
     }
@@ -392,8 +400,8 @@ void *thread_search_path(void *args)
             msg_data_send->n = min_node;
             msg_data_send->n_successor = e->dest;
 
-            printf("MMMM -- %d %d %d\n", thread_data->m->a, thread_data->m->b, thread_data->m->p);
-            printf("computing hash mult %d\n", e->dest->id);
+            fprintf(stdout, "MMMM -- %d %d %d\n", thread_data->m->a, thread_data->m->b, thread_data->m->p);
+            fprintf(stdout, "computing hash mult %d\n", e->dest->id);
 
             recipient = compute_hash_mult(e->dest, thread_data->m);
 
