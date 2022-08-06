@@ -88,7 +88,10 @@ void djikstraTest(char *filename, int srcId, int dstId, void *(*readData)(char *
     path = (path_t *)util_malloc(sizeof(path_t));
     util_check_no_r(path != NULL, "Could not allocate path.");
 
+    uint64_t tg = nano_count();
     g = graph_create(filename, readData == NULL ? NULL : readData);
+    tg = nano_count() - tg;
+    fprintf(stdout, "Graph created in %f seconds\n", NS_TO_S(tg));
 
     // graph_stats(stdout, g, NULL);
 
@@ -100,11 +103,15 @@ void djikstraTest(char *filename, int srcId, int dstId, void *(*readData)(char *
 
     fprintf(stdout, "DJIKSTRA\n\n");
 
+    uint64_t t = nano_count();
+
     seq_djikstra_path(g, src, dst, &path);
+
+    t = nano_count() - t;
 
     if (path != NULL)
     {
-        fprintf(stdout, "\nFound path with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
+        fprintf(stdout, "\nFound path in %f seconds with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", NS_TO_S(t), path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
 
         while (!stack_empty_m(path->nodes))
         {
@@ -142,7 +149,10 @@ void astarTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *
     path = (path_t *)util_malloc(sizeof(path_t));
     util_check_no_r(path != NULL, "Could not allocate path.");
 
+    uint64_t tg = nano_count();
     g = graph_create(filename, readData == NULL ? NULL : readData);
+    tg = nano_count() - tg;
+    fprintf(stdout, "Graph created in %f seconds\n", NS_TO_S(tg));
 
     // graph_stats(stdout, g, NULL);
 
@@ -154,11 +164,15 @@ void astarTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *
 
     fprintf(stdout, "A*\n\n");
 
+    uint64_t t = nano_count();
+
     seq_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path);
+
+    t = nano_count() - t;
 
     if (path != NULL)
     {
-        fprintf(stdout, "\nFound path with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
+        fprintf(stdout, "\nFound path in %f seconds with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", NS_TO_S(t), path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
 
         while (!stack_empty_m(path->nodes))
         {
@@ -196,7 +210,10 @@ void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_
     path = (path_t *)util_malloc(sizeof(path_t));
     util_check_no_r(path != NULL, "Could not allocate path.");
 
+    uint64_t tg = nano_count();
     g = graph_create(filename, readData == NULL ? NULL : readData);
+    tg = nano_count() - tg;
+    fprintf(stdout, "Graph created in %f seconds\n", NS_TO_S(tg));
 
     // graph_stats(stdout, g, NULL);
 
@@ -206,13 +223,17 @@ void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_
     fprintf(stdout, "Source: %d\n", src->id);
     fprintf(stdout, "Destination: %d\n", dst->id);
 
-    fprintf(stdout, "A*\n\n");
+    fprintf(stdout, "PAR A*\n\n");
 
-    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, 4);
+    uint64_t t = nano_count();
+
+    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, 16);
+
+    t = nano_count() - t;
 
     if (path != NULL)
     {
-        fprintf(stdout, "\nFound path with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
+        fprintf(stdout, "\nFound path in %f seconds with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", NS_TO_S(t), path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
 
         while (!stack_empty_m(path->nodes))
         {
@@ -244,9 +265,9 @@ void smallGraphTest(char *filename, int srcId, int dstId)
 
 void cityGraphTest(char *filename, int srcId, int dstId)
 {
-    // djikstraTest(filename, srcId, dstId, read_2d_data);
-    // fprintf(stdout, "\n-------------------------\n");
-    // astarTest(filename, srcId, dstId, heuristic, read_2d_data);
-    // fprintf(stdout, "\n-------------------------\n");
+    djikstraTest(filename, srcId, dstId, read_2d_data);
+    fprintf(stdout, "\n-------------------------\n");
+    astarTest(filename, srcId, dstId, heuristic, read_2d_data);
+    fprintf(stdout, "\n-------------------------\n");
     astarParTest(filename, srcId, dstId, heuristic, read_2d_data);
 }

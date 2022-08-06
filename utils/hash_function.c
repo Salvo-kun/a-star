@@ -53,6 +53,6 @@ int hash_mult(int state, mult_hash_t *m)
 {
     unsigned int ac = m->a * state;
     ac += m->b;
-    fprintf(stdout, "ac + b = %u\n", ac);
+    //fprintf(stdout, "ac + b = %u\n", ac);
     return ((ac % m->p) % m->m);
 }
