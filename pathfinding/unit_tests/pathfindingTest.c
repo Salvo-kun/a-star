@@ -10,7 +10,6 @@ struct coord_2d_s
 {
     int x;
     int y;
-    int hash;
 };
 
 int heuristic(vertex_t *a, vertex_t *b);
@@ -68,7 +67,6 @@ void *read_2d_data(char *line, int *id)
 
     data->x = x;
     data->y = y;
-    data->hash = 0;
 
     return (void *)data;
 }
