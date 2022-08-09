@@ -1,7 +1,6 @@
 #include <pthread.h>
 #include "pathfinding.h"
 #include "../msg_queue/msg_queue.h"
-#include "../utils/hash_function.h"
 
 // Data structures
 
@@ -35,8 +34,9 @@ typedef struct thread_data_s
     int *terminate_counter;
     int *program_terminated;
 
-    zobrist_t *k;
-    mult_hash_t *m;
+    hash_t *m;
+
+    int (*compute_hash)(unsigned int hash_old_state, int state, unsigned int *hash, hash_t *k);
 
 } thread_data_t;
 
@@ -50,19 +50,16 @@ typedef struct msg_data_s
 // Private methods prototypes
 
 int terminate_detection(thread_data_t *data);
-int compute_recipient(vertex_t *v, int n);
-int compute_hash_mult(vertex_t *v, mult_hash_t *m);
+int compute_recipient(vertex_t *v, int n, hash_t *m, vertex_t *min_node, int (*compute_hash)(unsigned int hash_old_state, int state, unsigned int *hash, hash_t *k));
 void *thread_search_path(void *args);
 
 // Public methods
 
-int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristic)(vertex_t *, vertex_t *), path_t **path, int n_threads_to_use)
+int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristic)(vertex_t *, vertex_t *), path_t **path, int n_threads_to_use, int (*compute_hash)(unsigned int hash_old_state, int state, unsigned int *hash, hash_t *k))
 {
     int i, result, terminate_counter = 0, program_terminated = 0, first_recipient;
-    zobrist_t k;
-    mult_hash_t m;
-    init_zobrist(&k);
-    init_mult_hash(&m, n_threads_to_use);
+    hash_t m;
+    init_hash(&m);
     fprintf(stdout, "ASTAR PATH PAR\n");
 
     // Check parameters are not null before starting
@@ -117,9 +114,9 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
         util_check_r(pthread_cond_init(cond_variables[i], NULL) == 0, "Could not initialize condition variable, returning...\n", 0);
     }
 
-    hash_zobrist(0, src->id, &src->hash, &k);
-
-    first_recipient = compute_recipient(src, n_threads_to_use);
+    fprintf(stdout, "--- FIRST ITERATION ---\n");
+    first_recipient = compute_recipient(src, n_threads_to_use, &m, NULL, compute_hash);
+    fprintf(stdout, "---- FIRST RECIPIENT %d ------\n", first_recipient);
 
     for (i = 0; i < n_threads_to_use; i++)
     {
@@ -138,8 +135,8 @@ int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
         thread_data[i].cond_variables = cond_variables;
         thread_data[i].terminate_counter = &terminate_counter;
         thread_data[i].program_terminated = &program_terminated;
-        thread_data[i].k = &k;
         thread_data[i].m = &m;
+        thread_data[i].compute_hash = compute_hash;
 
         // Creates the priority queue which will contain unvisited nodes
         open_q[i] = heap_create(0, 10);
@@ -392,10 +389,6 @@ void *thread_search_path(void *args)
             fprintf(stdout, "Thread %d | Checking edge from node with id %d to node with id %d\n", thread_data->id_thread, min_node->id, e->dest->id);
             int new_true_cost = min_node->true_cost + e->weight;
 
-            // check if no errors
-            // hash_zobrist(min_node->hash, e->dest->id, &e->dest->hash, thread_data->k);
-            fprintf(stdout, "--THREAD %d CALCULATING THE ZOBRIST with newstate = %d and added node = %d ---\n", thread_data->id_thread, e->dest->hash, e->dest->id);
-
             msg_data_send->true_cost = new_true_cost;
             msg_data_send->n = min_node;
             msg_data_send->n_successor = e->dest;
@@ -403,7 +396,8 @@ void *thread_search_path(void *args)
             fprintf(stdout, "MMMM -- %d %d %d\n", thread_data->m->a, thread_data->m->b, thread_data->m->p);
             fprintf(stdout, "computing hash mult %d\n", e->dest->id);
 
-            recipient = compute_hash_mult(e->dest, thread_data->m);
+            // recipient = compute_hash_mult(e->dest, thread_data->m);
+            recipient = compute_recipient(e->dest, thread_data->n_thread, thread_data->m, min_node, thread_data->compute_hash);
 
             fprintf(stdout, "Thread %d | send message to %d from node with id %d to node with id %d with cost %d\n", thread_data->id_thread, recipient, min_node->id, e->dest->id, new_true_cost);
             pthread_mutex_lock(thread_data->cond_v_mutex);
@@ -462,12 +456,17 @@ int terminate_detection(thread_data_t *data)
     return 1;
 }
 
-int compute_recipient(vertex_t *v, int n)
+int compute_recipient(vertex_t *v, int n, hash_t *m, vertex_t *min_node, int (*compute_hash)(unsigned int hash_old_state, int state, unsigned int *hash, hash_t *k))
 {
-    return v->hash % n;
-}
-
-int compute_hash_mult(vertex_t *v, mult_hash_t *m)
-{
-    return hash_mult(v->id, m);
+    unsigned int hash_value;
+    if (min_node == NULL)
+    {
+        fprintf(stdout, "----- FIRST ITERACTION IN COMPUTE RECIPIENT--------\n");
+        fprintf(stdout, "id = %d hash = %d a = %d\n", v->id, v->hash, m->a);
+        hash_value = compute_hash(0, v->id, &v->hash, m);
+    }
+    else
+        hash_value = compute_hash(min_node->hash, v->id, &v->hash, m);
+    // fprintf(stdout, "--THREAD CALCULATING THE ZOBRIST with newstate = %d and added node = %d ---\n", v->hash, v->id);
+    return hash_value % n;
 }

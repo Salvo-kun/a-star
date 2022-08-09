@@ -14,27 +14,22 @@ enum
     MAX_ZOBRIST_LENGTH = 256
 };
 
-typedef struct zobrist_s
-{
-    unsigned int hashtab[MAX_ZOBRIST_LENGTH][STATE_N];
-} zobrist_t;
-
-typedef struct mult_hash_s
+typedef struct hash_s
 {
     int p;
     int a;
     int b;
-    int m;
-} mult_hash_t;
+    unsigned int hashtab[MAX_ZOBRIST_LENGTH][STATE_N];
 
-void init_zobrist(zobrist_t *k);
-void init_mult_hash(mult_hash_t *m, int modul);
+} hash_t;
+
+void init_hash(hash_t *m);
 
 /**
  * old state XORed with the value received accessing the matrix with state
  */
-int hash_zobrist(unsigned int hash_old_state, int state, unsigned int *hash, zobrist_t *k);
+int hash_zobrist(unsigned int hash_old_state, int state, unsigned int *hash, hash_t *k);
 
-int hash_mult(int state, mult_hash_t *m);
+int hash_mult(unsigned int hash_old_state, int state, unsigned int *hash, hash_t *m);
 
 #endif

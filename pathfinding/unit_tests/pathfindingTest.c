@@ -3,6 +3,7 @@
 #include <math.h>
 #include "../pathfinding.h"
 #include "../../graph/graph.h"
+#include "../../utils/hash_function.h"
 
 typedef struct coord_2d_s coord_2d_t;
 
@@ -225,7 +226,7 @@ void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_
 
     uint64_t t = nano_count();
 
-    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, 16);
+    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, 16, hash_mult);
 
     t = nano_count() - t;
 
@@ -263,9 +264,9 @@ void smallGraphTest(char *filename, int srcId, int dstId)
 
 void cityGraphTest(char *filename, int srcId, int dstId)
 {
-    djikstraTest(filename, srcId, dstId, read_2d_data);
+    // djikstraTest(filename, srcId, dstId, read_2d_data);
     fprintf(stdout, "\n-------------------------\n");
-    astarTest(filename, srcId, dstId, heuristic, read_2d_data);
+    // astarTest(filename, srcId, dstId, heuristic, read_2d_data);
     fprintf(stdout, "\n-------------------------\n");
     astarParTest(filename, srcId, dstId, heuristic, read_2d_data);
 }

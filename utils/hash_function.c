@@ -8,25 +8,21 @@ static unsigned int get_rand()
            (((unsigned int)rand() << 24) & 0xFF000000u);
 }
 
-void init_zobrist(zobrist_t *k)
-{
-    for (int i = 0; i < MAX_ZOBRIST_LENGTH; i++)
-    {
-        for (int j = 0; j < 0; j++)
-        {
-            k->hashtab[i][j] = get_rand();
-        }
-    }
-}
-
-void init_mult_hash(mult_hash_t *m, int modul)
+void init_hash(hash_t *m)
 {
     m->p = INT_MAX;
     // random number (1, p-1)
     m->a = (rand() % (m->p - 2)) + 1;
     // random number (0, p-1)
     m->b = rand() % (m->p - 1);
-    m->m = modul;
+
+    for (int i = 0; i < MAX_ZOBRIST_LENGTH; i++)
+    {
+        for (int j = 0; j < 0; j++)
+        {
+            m->hashtab[i][j] = get_rand();
+        }
+    }
 }
 
 int abstraction(int state)
@@ -39,20 +35,20 @@ int abstraction(int state)
     the 0 because updating the state each time we don't need more
     elements in the matrix
 */
-int hash_zobrist(unsigned int hash_old_state, int state, unsigned int *hash, zobrist_t *k)
+int hash_zobrist(unsigned int hash_old_state, int state, unsigned int *hash, hash_t *k)
 {
     *hash = k->hashtab[abstraction(state)][0] ^ hash_old_state;
 
-    return 0;
+    return *hash;
 }
 /*
 modulus hash function
-    h(c) = ((ac + b) mod p)mod m
+    h(c) = ((ac + b) mod p) and mod m will be done in the other function
 */
-int hash_mult(int state, mult_hash_t *m)
+int hash_mult(unsigned int hash_old_state, int state, unsigned int *hash, hash_t *m)
 {
     unsigned int ac = m->a * state;
     ac += m->b;
-    //fprintf(stdout, "ac + b = %u\n", ac);
-    return ((ac % m->p) % m->m);
+    // fprintf(stdout, "ac + b = %u\n", ac);
+    return (ac % m->p);
 }

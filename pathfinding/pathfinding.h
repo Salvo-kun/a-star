@@ -7,6 +7,7 @@
 #include "../stack/stack.h"
 #include "../hash_table/hash_table.h"
 #include "../graph/graph.h"
+#include "../utils/hash_function.h"
 
 // Data structures declaration
 
@@ -54,6 +55,6 @@ extern int seq_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*h
   Returns 0 if an error occurs, 1 otherwise.
 */
 
-extern int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristic)(vertex_t *, vertex_t *), path_t **path, int n_threads_to_use);
+extern int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristic)(vertex_t *, vertex_t *), path_t **path, int n_threads_to_use, int (*compute_hash)(unsigned int hash_old_state, int state, unsigned int *hash, hash_t *k));
 
 #endif
