@@ -129,3 +129,11 @@ uint64_t nano_count()
 
   return (uint64_t)t.tv_sec * 1000000000 + t.tv_nsec;
 }
+
+unsigned int get_rand()
+{
+    return (((unsigned int)rand() << 0) & 0x000000FFu) |
+           (((unsigned int)rand() << 8) & 0x0000FF00u) |
+           (((unsigned int)rand() << 16) & 0x00FF0000u) |
+           (((unsigned int)rand() << 24) & 0xFF000000u);
+}

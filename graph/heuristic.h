@@ -2,6 +2,7 @@
 #define _HEURISTIC
 
 #include "domain.h"
+#include "graph.h"
 
 // Data structures declaration
 enum Heuristic

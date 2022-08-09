@@ -2,7 +2,6 @@
 #define _HEURISTIC_PRIVATE
 
 #include "../utils/util.h"
-#include "graph.h"
 #include "heuristic.h"
 #include "__domain.h"
 

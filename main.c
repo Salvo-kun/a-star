@@ -6,6 +6,7 @@
 #include <argp.h>
 #include "graph/domain.h"
 #include "graph/heuristic.h"
+#include "graph/hash.h"
 #include "pathfinding/pathfinding.h"
 #include "utils/util.h"
 
@@ -20,7 +21,8 @@ struct arguments
   int numThreads; /* Argument for -t */
   int algorithm;  /* Argument for -a */
   int domain;     /* Argument for -d */
-  int heuristic;  /* Argument for -h */
+  int heuristic;  /* Argument for -e */
+  int hash;       /* Argument for -h */
 };
 
 /*
@@ -33,7 +35,8 @@ static struct argp_option options[] =
         {"threads", 't', "NUMTHREADS", 0, "Number of threads to be used."},
         {"algorithm", 'a', "ALGORITHM", 0, "Chosen algorithm, 0 for Djikstra, 1 for sequential A*, 2 for parallel A*."},
         {"domain", 'd', "DOMAIN", 0, "Chosen domain, 0 for 2D grids."},
-        {"heuristic", 'h', "HEURISTIC", 0, "Chosen heuristic, according to domain. For 2D grids, 0 is Manhattan distance."},
+        {"heuristic", 'e', "HEURISTIC", 0, "Chosen heuristic, according to domain, if required. For 2D grids, 0 is Manhattan distance."},
+        {"hash", 'h', "HASH", 0, "Chosen hash function, if required. 0 is Module Hash, 1 is Multiplicative Hash"},
         {"output", 'o', "OUTFILE", 0, "Output to OUTFILE instead of to standard output."},
         {0}};
 
@@ -59,8 +62,11 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
   case 'd':
     arguments->domain = atoi(arg);
     break;
-  case 'h':
+  case 'e':
     arguments->heuristic = atoi(arg);
+    break;
+  case 'f':
+    arguments->hash = atoi(arg);
     break;
   case 'o':
     arguments->outfile = arg;
@@ -122,6 +128,7 @@ int main(int argc, char **argv)
   arguments.algorithm = 1;
   arguments.domain = 0;
   arguments.heuristic = 0;
+  arguments.hash = 1;
   arguments.verbose = 0;
 
   /* Where the magic happens */
@@ -145,30 +152,51 @@ int main(int argc, char **argv)
   void *(*readData)(char *, int *) = choose_domain_reader(arguments.domain);
   util_check_r(readData != NULL, "Choose a valid domain!", 1);
 
-  // Choose heuristic
-  int (*heuristic)(vertex_t *, vertex_t *) = choose_heuristic(arguments.heuristic, arguments.domain);
-  util_check_r(heuristic != NULL, "Choose a valid heuristic!", 2);
+  // Choose heuristic if not Djikstra
+  int (*heuristic)(vertex_t *, vertex_t *) = NULL;
+  if (arguments.algorithm != 0)
+  {
+    heuristic = choose_heuristic(arguments.heuristic, arguments.domain);
+    util_check_r(heuristic != NULL, "Choose a valid heuristic!", 2);
+  }
+
+  // Choose hash function if parallel A*
+  hash_t *hash_data = NULL;
+  if (arguments.algorithm == 2)
+  {
+    hash_data = choose_hash(arguments.hash, arguments.numThreads);
+    util_check_r(hash_data != NULL, "Choose a valid hash function!", 3);
+  }
 
   graph_t *g;
   vertex_t *src, *dst;
   path_t *path;
 
   src = (vertex_t *)util_malloc(sizeof(vertex_t));
-  util_check_no_r(src != NULL, "Could not allocate src.");
+  util_check_r(src != NULL, "Could not allocate src.", 4);
 
   dst = (vertex_t *)util_malloc(sizeof(vertex_t));
-  util_check_no_r(dst != NULL, "Could not allocate dst.");
+  util_check_r(dst != NULL, "Could not allocate dst.", 5);
 
   path = (path_t *)util_malloc(sizeof(path_t));
-  util_check_no_r(path != NULL, "Could not allocate path.");
+  util_check_r(path != NULL, "Could not allocate path.", 6);
 
   uint64_t tg = nano_count();
   g = graph_create(arguments.args[0], readData);
   tg = nano_count() - tg;
   fprintf(outstream, "Graph created in %f seconds\n", NS_TO_S(tg));
 
-  // graph_find(g, srcId, &src);
-  // graph_find(g, dstId, &dst);
+  int srcId, dstId;
+
+  fprintf(stdout, "Enter source node id: ");
+  fscanf(stdin, "%d", &srcId);
+  graph_find(g, srcId, &src);
+  util_check_r(src != NULL, "Source node not found!", 7);
+
+  fprintf(stdout, "Enter destination node id: ");
+  fscanf(stdin, "%d", &dstId);
+  graph_find(g, dstId, &dst);
+  util_check_r(dst != NULL, "Destination node not found!", 8);
 
   uint64_t t = nano_count();
 
@@ -182,7 +210,7 @@ int main(int argc, char **argv)
       seq_a_star_path(g, src, dst, heuristic, &path);
       break;
     case 2:
-      par_a_star_path(g, src, dst, heuristic, &path, arguments.numThreads);
+      par_a_star_path(g, src, dst, heuristic, &path, arguments.numThreads, hash_data);
       break;
   }
 
@@ -209,6 +237,9 @@ int main(int argc, char **argv)
 
   graph_destroy(g, free);
   free(path);
+
+  if (arguments.algorithm == 2)
+    hash_destroy(hash_data);
 
   fprintf(outstream, "\n\n");
 

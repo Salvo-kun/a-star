@@ -3,7 +3,7 @@
 #include <math.h>
 #include "../pathfinding.h"
 #include "../../graph/graph.h"
-#include "../../utils/hash_function.h"
+#include "../../graph/hash.h"
 
 typedef struct coord_2d_s coord_2d_t;
 
@@ -97,8 +97,8 @@ void djikstraTest(char *filename, int srcId, int dstId, void *(*readData)(char *
     graph_find(g, srcId, &src);
     graph_find(g, dstId, &dst);
 
-    fprintf(stdout, "Source: %d\n", src->id);
-    fprintf(stdout, "Destination: %d\n", dst->id);
+    // fprintf(stdout, "Source: %d\n", src->id);
+    // fprintf(stdout, "Destination: %d\n", dst->id);
 
     fprintf(stdout, "DJIKSTRA\n\n");
 
@@ -117,10 +117,10 @@ void djikstraTest(char *filename, int srcId, int dstId, void *(*readData)(char *
             int *id;
 
             stack_pop(path->nodes, (void **)&id);
-            fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
+            //fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
         }
 
-        fprintf(stdout, "\n");
+        // fprintf(stdout, "\n");
     }
     else
     {
@@ -158,8 +158,8 @@ void astarTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *
     graph_find(g, srcId, &src);
     graph_find(g, dstId, &dst);
 
-    fprintf(stdout, "Source: %d\n", src->id);
-    fprintf(stdout, "Destination: %d\n", dst->id);
+    // fprintf(stdout, "Source: %d\n", src->id);
+    // fprintf(stdout, "Destination: %d\n", dst->id);
 
     fprintf(stdout, "A*\n\n");
 
@@ -178,10 +178,10 @@ void astarTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *
             int *id;
 
             stack_pop(path->nodes, (void **)&id);
-            fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
+            //fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
         }
 
-        fprintf(stdout, "\n");
+        //fprintf(stdout, "\n");
     }
     else
     {
@@ -219,14 +219,17 @@ void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_
     graph_find(g, srcId, &src);
     graph_find(g, dstId, &dst);
 
-    fprintf(stdout, "Source: %d\n", src->id);
-    fprintf(stdout, "Destination: %d\n", dst->id);
+    //fprintf(stdout, "Source: %d\n", src->id);
+    //fprintf(stdout, "Destination: %d\n", dst->id);
 
     fprintf(stdout, "PAR A*\n\n");
 
     uint64_t t = nano_count();
 
-    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, 16, hash_mult);
+    int numThreads = 4;
+    hash_t *hash_data = choose_hash(MULTIPLICATIVE, numThreads);
+
+    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, numThreads, hash_data);
 
     t = nano_count() - t;
 
@@ -239,10 +242,10 @@ void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_
             int *id;
 
             stack_pop(path->nodes, (void **)&id);
-            fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
+            //fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
         }
 
-        fprintf(stdout, "\n");
+        // fprintf(stdout, "\n");
     }
     else
     {
@@ -251,6 +254,7 @@ void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_
 
     graph_destroy(g, readData == NULL ? NULL : free);
     free(path);
+    hash_destroy(hash_data);
 
     fprintf(stdout, "\n\n");
 }
@@ -266,7 +270,7 @@ void cityGraphTest(char *filename, int srcId, int dstId)
 {
     // djikstraTest(filename, srcId, dstId, read_2d_data);
     fprintf(stdout, "\n-------------------------\n");
-    // astarTest(filename, srcId, dstId, heuristic, read_2d_data);
+    astarTest(filename, srcId, dstId, heuristic, read_2d_data);
     fprintf(stdout, "\n-------------------------\n");
     astarParTest(filename, srcId, dstId, heuristic, read_2d_data);
 }

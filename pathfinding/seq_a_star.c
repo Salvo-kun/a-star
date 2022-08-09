@@ -30,7 +30,7 @@ int seq_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
     util_check_r(closed_set != NULL, "Could not allocate closed set, returning...\n", 0);
 
     // Init open with source
-    fprintf(stdout, "Add node with id %d to open set\n", src->id);
+    //fprintf(stdout, "Add node with id %d to open set\n", src->id);
     result = heap_insert(open_pq, src->id, (void *)src, 0);
 
     // Check no errors occurred
@@ -43,13 +43,13 @@ int seq_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
         // Check allocation was successful
         util_check_r(min_node != NULL, "Could not allocate min_node, returning...\n", 0);
 
-        fprintf(stdout, "Extract node with minimum cost from open set\n");
+        //fprintf(stdout, "Extract node with minimum cost from open set\n");
         result = heap_extract(open_pq, (void **)&min_node, NULL);
 
         // Check no errors occurred
         util_check_r(result, "Could not extract from the open set, returning...\n", 0);
 
-        fprintf(stdout, "Add node with id %d to closed set\n", min_node->id);
+        //fprintf(stdout, "Add node with id %d to closed set\n", min_node->id);
         result = hash_table_insert(closed_set, min_node->id, (void *)min_node);
 
         // Check no errors occurred
@@ -98,7 +98,7 @@ int seq_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
 
         while (e != NULL)
         {
-            fprintf(stdout, "Checking edge from node with id %d to node with id %d\n", min_node->id, e->dest->id);
+            //fprintf(stdout, "Checking edge from node with id %d to node with id %d\n", min_node->id, e->dest->id);
             int true_cost = min_node->true_cost + e->weight;
             int heuristic_cost = heuristic == NULL ? 0 : heuristic(e->dest, dst);
 
@@ -114,11 +114,11 @@ int seq_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
 
             if (data != NULL)
             {
-                fprintf(stdout, "Node with id %d already in closed set\n", e->dest->id);
+                //fprintf(stdout, "Node with id %d already in closed set\n", e->dest->id);
                 if (true_cost < e->dest->true_cost)
                 {
 
-                    fprintf(stdout, "Found smaller cost for node with id %d, readding it to open set\n", e->dest->id);
+                    //fprintf(stdout, "Found smaller cost for node with id %d, readding it to open set\n", e->dest->id);
                     result = hash_table_delete(closed_set, e->dest->id);
 
                     // Check no errors occurred
@@ -139,7 +139,7 @@ int seq_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
             }
             else
             {
-                fprintf(stdout, "Node with id %d not in closed set\n", e->dest->id);
+                //fprintf(stdout, "Node with id %d not in closed set\n", e->dest->id);
                 int *position = (int *)util_malloc(sizeof(int));
 
                 // Check allocation was successful
@@ -152,7 +152,7 @@ int seq_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
 
                 if (position == NULL)
                 {
-                    fprintf(stdout, "Add node with id %d to open set\n", e->dest->id);
+                    //fprintf(stdout, "Add node with id %d to open set\n", e->dest->id);
                     result = heap_insert(open_pq, e->dest->id, (void *)e->dest, true_cost + heuristic_cost);
 
                     // Check no errors occurred
@@ -172,7 +172,7 @@ int seq_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristi
                 }
             }
 
-            fprintf(stdout, "Updating costs and parent for node with id %d to open set\n", e->dest->id);
+            //fprintf(stdout, "Updating costs and parent for node with id %d to open set\n", e->dest->id);
             e->dest->true_cost = true_cost;
             e->dest->heuristic_cost = heuristic_cost;
             e->dest->parent = min_node;
