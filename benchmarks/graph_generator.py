@@ -8,10 +8,12 @@ Created on Mon Jul 18 18:33:18 2022
 import numpy as np
 import networkx as nx
 import sys
+import random
 
 if __name__ == '__main__':
     lines = []
     size = int(sys.argv[3])
+    randWeightLimit = int(sys.argv[4])
     
     # lines to 2d array
     with open(sys.argv[1]) as f:
@@ -47,5 +49,5 @@ if __name__ == '__main__':
         for edge in edges:
             x1, y1 = edge[0]
             x2, y2 = edge[1]
-            file.write(str(size*x1+y1) + ' ' +  str(size*x2+y2) + ' 1\n')
+            file.write(str(size*x1+y1) + ' ' +  str(size*x2+y2) + ' ' + str(random.randint(1, randWeightLimit)) + '\n')
     

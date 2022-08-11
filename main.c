@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <string.h>
 #include <argp.h>
+#include <libgen.h>
 #include "graph/domain.h"
 #include "graph/heuristic.h"
 #include "graph/hash.h"
@@ -15,7 +16,7 @@ const char *argp_program_version = "a-star_1.0";
 /* This structure is used by main to communicate with parse_opt. */
 struct arguments
 {
-  char *args[1];  /* ARG1 */
+  char *args[1];  /* ARGS */
   int verbose;    /* The -v flag */
   char *outfile;  /* Argument for -o */
   int numThreads; /* Argument for -t */
@@ -37,7 +38,7 @@ static struct argp_option options[] =
         {"domain", 'd', "DOMAIN", 0, "Chosen domain, 0 for 2D grids."},
         {"heuristic", 'e', "HEURISTIC", 0, "Chosen heuristic, according to domain, if required. For 2D grids, 0 is Manhattan distance."},
         {"hash", 'h', "HASH", 0, "Chosen hash function, if required. 0 is Module Hash, 1 is Multiplicative Hash"},
-        {"output", 'o', "OUTFILE", 0, "Output to OUTFILE instead of to standard output."},
+        {"output", 'o', "OUTFILE", 0, "Output the path found to OUTFILE instead of standard output."},
         {0}};
 
 /*
@@ -95,7 +96,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
    A description of the non-option command-line arguments
      that we accept.
 */
-static char args_doc[] = "INPUTFILE";
+static char args_doc[] = "IN_FILE";
 
 /*
   DOC.  Field 4 in ARGP.
@@ -117,10 +118,7 @@ static struct argp argp = {options, parse_opt, args_doc, doc};
 int main(int argc, char **argv)
 {
   struct arguments arguments;
-  // FILE *instream;
-  FILE *outstream;
-
-  char waters[] = "a place to stay enough to eat somewhere old heroes shuffle safely down the street --\"the gunners dream\", Roger Waters, 1983\n";
+  FILE *outfile, *outstream;
 
   /* Set argument defaults */
   arguments.outfile = NULL;
@@ -130,23 +128,29 @@ int main(int argc, char **argv)
   arguments.heuristic = 0;
   arguments.hash = 1;
   arguments.verbose = 0;
+  outstream = stdout;
 
   /* Where the magic happens */
   argp_parse(&argp, argc, argv, 0, 0, &arguments);
 
   /* Where do we send output? */
   if (arguments.outfile)
-    outstream = fopen(arguments.outfile, "w");
-  else
-    outstream = stdout;
+    outfile = util_fopen(arguments.outfile, "w");
 
   /* Print argument values */
-  fprintf(outstream, "numThreads = %d\n\n", arguments.numThreads);
-  fprintf(outstream, "INPUTFILE = %s\n\n", arguments.args[0]);
-
-  /* If in verbose mode, print song stanza */
   if (arguments.verbose)
-    fprintf(outstream, "%s", waters);
+  {
+    fprintf(outstream, "---------------------- PARAMETERS ---------------------- \n");
+    fprintf(outstream, "verbose = %d\n", arguments.verbose);
+    fprintf(outstream, "outfile = %s\n", arguments.outfile);
+    fprintf(outstream, "hash = %d\n", arguments.hash);
+    fprintf(outstream, "heuristic = %d\n", arguments.heuristic);
+    fprintf(outstream, "domain = %d\n", arguments.domain);
+    fprintf(outstream, "algorithm = %d\n", arguments.algorithm);
+    fprintf(outstream, "numThreads = %d\n", arguments.numThreads);
+    fprintf(outstream, "IN_FILE = %s\n", arguments.args[0]);
+    fprintf(outstream, "---------------------------------------------------- \n");
+  }
 
   // Choose domain's data reading strategy
   void *(*readData)(char *, int *) = choose_domain_reader(arguments.domain);
@@ -184,7 +188,9 @@ int main(int argc, char **argv)
   uint64_t tg = nano_count();
   g = graph_create(arguments.args[0], readData);
   tg = nano_count() - tg;
-  fprintf(outstream, "Graph created in %f seconds\n", NS_TO_S(tg));
+
+  if (arguments.verbose)
+    fprintf(outstream, "Graph created in %f seconds.\n", NS_TO_S(tg));
 
   int srcId, dstId;
 
@@ -203,32 +209,34 @@ int main(int argc, char **argv)
   // Choose algorithm
   switch (arguments.algorithm)
   {
-    case 0:
-      seq_djikstra_path(g, src, dst, &path);
-      break;
-    case 1:
-      seq_a_star_path(g, src, dst, heuristic, &path);
-      break;
-    case 2:
-      par_a_star_path(g, src, dst, heuristic, &path, arguments.numThreads, hash_data);
-      break;
+  case 0:
+    seq_djikstra_path(g, src, dst, &path);
+    break;
+  case 1:
+    seq_a_star_path(g, src, dst, heuristic, &path);
+    break;
+  case 2:
+    par_a_star_path(g, src, dst, heuristic, &path, arguments.numThreads, hash_data);
+    break;
   }
 
   t = nano_count() - t;
 
   if (path != NULL)
   {
-    fprintf(outstream, "\nFound path in %f seconds with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", NS_TO_S(t), path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
+    if (arguments.verbose)
+      fprintf(outstream, "\nFound path in %f seconds.\tCost = %d.\tLength = %d.\tVisited nodes = %d.\tRevisited nodes = %d.\n", NS_TO_S(t), path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
 
-    while (!stack_empty_m(path->nodes))
+    if (arguments.outfile)
     {
-      int *id;
+      while (!stack_empty_m(path->nodes))
+      {
+        int *id;
 
-      stack_pop(path->nodes, (void **)&id);
-      fprintf(outstream, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
+        stack_pop(path->nodes, (void **)&id);
+        fprintf(outfile, "%d\n", *id);
+      }
     }
-
-    fprintf(outstream, "\n");
   }
   else
   {
@@ -241,7 +249,8 @@ int main(int argc, char **argv)
   if (arguments.algorithm == 2)
     hash_destroy(hash_data);
 
-  fprintf(outstream, "\n\n");
+  if (arguments.outfile)
+    fclose(outstream);
 
   return 0;
 }

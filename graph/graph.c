@@ -173,6 +173,7 @@ vertex_t *new_node(vertex_t *next, int id, void *data)
 
   v = (vertex_t *)util_malloc(1 * sizeof(vertex_t));
   v->id = id;
+  v->visited = 0;
   v->true_cost = 0;
   v->heuristic_cost = 0;
   v->data = data;
