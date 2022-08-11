@@ -23,7 +23,7 @@ if __name__ == '__main__':
             
         for i in f.readlines():
             if len(i.strip()) != 0:
-                line = list(map(lambda c: 0 if c == '.' else 1, i.strip()))
+                line = list(map(lambda c: 1 if c in ['G', '@'] else 0, i.strip()))
                 lines.append(line)
         a = np.array(lines)
         
