@@ -173,16 +173,16 @@ int main(int argc, char **argv)
   }
 
   graph_t *g;
-  vertex_t *src, *dst;
-  path_t *path;
+  vertex_t **src, **dst;
+  path_t **path;
 
-  src = (vertex_t *)util_malloc(sizeof(vertex_t));
+  src = (vertex_t **)util_malloc(sizeof(vertex_t *));
   util_check_r(src != NULL, "Could not allocate src.", 4);
 
-  dst = (vertex_t *)util_malloc(sizeof(vertex_t));
+  dst = (vertex_t **)util_malloc(sizeof(vertex_t *));
   util_check_r(dst != NULL, "Could not allocate dst.", 5);
 
-  path = (path_t *)util_malloc(sizeof(path_t));
+  path = (path_t **)util_malloc(sizeof(path_t *));
   util_check_r(path != NULL, "Could not allocate path.", 6);
 
   uint64_t tg = nano_count();
@@ -196,13 +196,13 @@ int main(int argc, char **argv)
 
   fprintf(stdout, "Enter source node id: ");
   fscanf(stdin, "%d", &srcId);
-  graph_find(g, srcId, &src);
-  util_check_r(src != NULL, "Source node not found!", 7);
+  graph_find(g, srcId, src);
+  util_check_r(*src != NULL, "Source node not found!", 7);
 
   fprintf(stdout, "Enter destination node id: ");
   fscanf(stdin, "%d", &dstId);
-  graph_find(g, dstId, &dst);
-  util_check_r(dst != NULL, "Destination node not found!", 8);
+  graph_find(g, dstId, dst);
+  util_check_r(*dst != NULL, "Destination node not found!", 8);
 
   uint64_t t = nano_count();
 
@@ -210,33 +210,36 @@ int main(int argc, char **argv)
   switch (arguments.algorithm)
   {
   case 0:
-    seq_djikstra_path(g, src, dst, &path);
+    seq_djikstra_path(g, *src, *dst, path);
     break;
   case 1:
-    seq_a_star_path(g, src, dst, heuristic, &path);
+    seq_a_star_path(g, *src, *dst, heuristic, path);
     break;
   case 2:
-    par_a_star_path(g, src, dst, heuristic, &path, arguments.numThreads, hash_data);
+    par_a_star_path(g, *src, *dst, heuristic, path, arguments.numThreads, hash_data);
     break;
   }
 
   t = nano_count() - t;
 
-  if (path != NULL)
+  if (*path != NULL)
   {
     if (arguments.verbose)
-      fprintf(outstream, "\nFound path in %f seconds.\tCost = %d.\tLength = %d.\tVisited nodes = %d.\tRevisited nodes = %d.\n", NS_TO_S(t), path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
+      fprintf(outstream, "\nFound path in %f seconds.\tCost = %d.\tLength = %d.\tVisited nodes = %d.\tRevisited nodes = %d.\n", NS_TO_S(t), (*path)->cost, stack_count((*path)->nodes) - 1, (*path)->visited_nodes, (*path)->revisited_nodes);
 
     if (arguments.outfile)
     {
-      while (!stack_empty_m(path->nodes))
+      while (!stack_empty_m((*path)->nodes))
       {
         int *id;
 
-        stack_pop(path->nodes, (void **)&id);
+        stack_pop((*path)->nodes, (void **)&id);
         fprintf(outfile, "%d\n", *id);
       }
     }
+
+    stack_destroy((*path)->nodes, NULL);
+    util_free(*path);
   }
   else
   {
@@ -244,7 +247,9 @@ int main(int argc, char **argv)
   }
 
   graph_destroy(g, free);
-  free(path);
+  util_free(path);
+  util_free(src);
+  util_free(dst);
 
   if (arguments.algorithm == 2)
     hash_destroy(hash_data);

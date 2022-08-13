@@ -25,9 +25,9 @@ int main(int argc, char **argv)
   printf("%p %d\n%p %d\n\n", data, *data, (newData + 5), *(newData + 5));
 
   *data = 100;
-  hash_table_update(ht, 5, data);
+  hash_table_update(ht, 5, data, free);
   hash_table_stats(stdout, ht, printData);
-  hash_table_delete(ht, 5);
+  hash_table_delete(ht, 5, free);
   hash_table_stats(stdout, ht, printData);
 
   hash_table_destroy(ht, NULL);

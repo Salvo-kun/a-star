@@ -33,16 +33,16 @@ extern int hash_table_get(hash_table_t *hash_table, int key, void **data);
 extern int hash_table_insert(hash_table_t *hash_table, int key, void *data);
 
 /*
-  Updates the element inside the hash_table with the given key.
+  Updates the element inside the hash_table with the given key, eventually freeing also the old data (if freeData is not NULL).
   Returns 0 if an error occurs, 1 otherwise.
 */
-extern int hash_table_update(hash_table_t *hash_table, int key, void *data);
+extern int hash_table_update(hash_table_t *hash_table, int key, void *data, void (*freeData)(void *));
 
 /*
-  Removes an element from the hash_table, given its key.
+  Removes an element from the hash_table, given its key, eventually freeing also the contained data (if freeData is not NULL).
   Returns 0 if an error occurs, 1 otherwise.
 */
-extern int hash_table_delete(hash_table_t *hash_table, int key);
+extern int hash_table_delete(hash_table_t *hash_table, int key, void (*freeData)(void *));
 
 /*
   Frees the allocated memory for the given hash_table, eventually freeing also the contained data (if freeData is not NULL).

@@ -39,7 +39,7 @@ int main(int argc, char **argv)
     heap_stats(stdout, heap, printData);
 
     heap_find(heap, 6, &pos);
-    heap_update(heap, 6, 0);
+    heap_update(heap, 6, 0, NULL);
 
     heap_stats(stdout, heap, printData);
 
