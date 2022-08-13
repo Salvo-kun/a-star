@@ -58,3 +58,4 @@ bin/
 
 # Log files
 *.log
+mem-leaks-report.txt
