@@ -1,0 +1,43 @@
+\documentclass[10pt,letterpaper]{article}
+
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{tabularx}
+
+\graphicspath{{assets/}}
+
+\newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}}
+\newcommand{\IBS}[1] {\footnote{Itzik: #1}}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TITLE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{PARALLEL A-STAR}
+
+\author{
+    Salvatore Licata \\
+    Lorenzo Ferro \\
+    Alessandro Zamparutti
+}
+
+\date{
+    August 2022
+}
+
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Sections %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{sections/intro}
+\input{sections/reading.tex}
+\input{sections/basic_structures.tex}
+\input{sections/parallelism.tex}
+\input{sections/experimental_evaluation.tex}
+\input{sections/summary}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\input{sections/appendix}
+\end{document}
+

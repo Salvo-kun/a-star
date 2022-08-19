@@ -37,7 +37,6 @@ struct vertex_s
   int true_cost;
   int visited;
   int heuristic_cost;
-  unsigned int hash;
   void *data;
   vertex_t *parent;
   edge_t *head;

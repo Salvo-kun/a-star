@@ -12,7 +12,7 @@ typedef struct stack stack_t;
 // Function prototypes
 
 /*
-  Creates a FIFO stack.
+  Creates a LIFO stack.
   Returns NULL if an error occurs, the stack pointer otherwise.
 */
 extern stack_t *stack_create();
