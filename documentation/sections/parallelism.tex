@@ -1,6 +1,151 @@
-\section{Approach}
-\label{Sec:approach}
+\section{A-Star Implementation}
+\label{Sec:implementation}
 
-Put your approach text here.
+The A-Star algorithm is based on the use of a heuristic function which exstimates the cost from a point to a destination node.
 
-If you are working with others on the paper, you can use custom footnotes like this one \IBS{I think the template is coming along nicely, good job!}
+Both implementations are based on two set, the OPEN and the CLOSE one. The first is implemented using a priority queue (our heap \ref{heap}) and contains nodes that have been discovered but not expanded yet. The other one with a hash table \ref{hash_table} and contains node that have been expanded.
+
+All vertex contains a link to a parent vertex which is used to keep trace of the path found by the algorithm, at the end the solution is inserted in a stack \ref{stack} pushing from the goal node and going backward.
+
+\subsection{Sequential}
+
+Starting from the pseudo-code taken from (insert bibliography)
+
+\begin{alltt}
+    1 Initialize OPEN to \{s_0\};
+    2 while OPEN \(\neq\) 0; do
+    3 Get and remove from OPEN a node n with a smallest f(n);
+    4 Add n to CLOSED;
+    5 if n is a goal node then
+    6   Return solution path from \(s_0\) to n;
+    7 for every successor n' of n do
+    8   $g_1$ = g(n) + c(n; \(n'\));
+    9   if n' \(\in\) CLOSED then
+    10      if g_1 < g(n') then
+    11          Remove n' from CLOSED and add it to OPEN;
+    12      else
+    13          Continue;
+    14  else
+    15      if n' \(\notin\) OPEN then
+    16          Add $n'$ to OPEN;
+    17      else if $g_1$ \(\geq\) g($n'$) then
+    18          Continue;
+    19  Set g($n'$) = g_1;
+    20  Set f($n'$) = g($n'$) + h($n'$);
+    21  Set parent($n'$) = n;
+    22 Return failure (no path exists);
+\end{alltt}
+
+Where
+\begin{itemize}
+    \item $s_0$ : is the starting node
+    \item $g(n)$ : is the best known cost of the path from $s_0$ to $n$
+    \item $h(n)$ : is the heuristic function
+    \item $f(n)$ : is the sum $g(n) + h(n)$ is used in the OPEN set to calculate the priority
+\end{itemize}
+
+\subsection{Parallel}
+
+Implementation of the decentralized AStar algorithm, where each thread has its own CLOSED and OPEN set, when a thread discover a neighbor node chose the thread that will expand it.
+When a thread find a solution compare the cost with the global one and if have a lower cost it just copies the cost (the global cost is protected with a lock).
+
+\subsubsection{Pseudo-code}
+
+\begin{alltt}
+    1 Initialize OPENp for each thread p;
+    2 Initialize incumbent.cost = \(\infty\);
+    3 Add s0 to OPENComputeRecipient(s0);
+    4 In parallel, on each thread p, execute 5-31;
+    5 while TerminateDetection() do
+    6   while BUFFERp \(\neq\) 0 ; do
+    7       Get and remove from BUFFERp a triplet (n0; g1; n);
+    8       if n0 2 CLOSEDp then
+    9           if g1 < g(n0) then
+    10              Remove n0 from CLOSEDp and add it to OPENp;
+    11             else
+    12                  Continue;
+    13      else
+    14          if n0 =2 OPENp then
+    15              Add n0 to OPENp;
+    16          else if g1  g(n0) then
+    17              Continue;
+    18      Set g(n0) = g1;
+    19      Set f(n0) = g(n0) + h(n0);
+    20      Set parent(n0) = n;
+    21  if OPENp = ; or Smallest f(n) value of n 2 OPENp \(\geq\) incumbent.cost then
+    22      Continue;
+    23  Get and remove from OPENp a node n with a smallest f(n);
+    24  Add n to CLOSEDp;
+    25  if n is a goal node then
+    26      if path cost from s0 to n < incumbent:cost then
+    27          incumbent = path from s0 to n;
+    28          incumbent.cost = path cost from s0 to n;
+    29  for every successor n0 of n do
+    30      Set g1 = g(n) + c(n; n0);
+    31      Add (n0; g1; n) to BUFFER ComputeRecipient(n);
+    32 if incumbent:cost = 1 then
+    33  Return failure (no path exists);
+    34 else
+    35  Return solution path from s0 to n;
+\end{alltt}
+
+Where
+\begin{itemize}
+    \item $BUFFER$ : is the structure for thread communication \ref{thread_buf}
+    \item $incumbent$ :  the shared best known path
+    \item $TerminateDetection$ : function to check if the path search is completed \ref{terminate}
+    \item $ComputeRecipient$ : function to chose the thread that will expand the node \ref{compute_reci}
+\end{itemize}
+
+\subsubsection{Compute recipient}
+\label{compute_reci}
+
+A Funciton to map the nodeId into a thread identifier we have 2 implementaitons.
+The basic module computed as  $node\_id \; \% \;  number\_of\_threads$ .
+A implementation of multiplicative hashing: \\
+$ h(node\_id) =((a*node\_id \; + \; b) \; \% \; p) \; \% \; number\_of\_threads $  \\ where:
+\begin{itemize}
+    \item $p$: prime large number (we used INT\_MAX =  $ 2^{31}-1 $)
+    \item $a$: random integer [1,p-1]
+    \item $b$: random integer [0,p-1]
+\end{itemize}
+
+InsertBiblio?
+
+\subsubsection{Thread communication}
+\label{thread_buf}
+
+A message queue \ref{message_queue} structure is used to allows threads to communicate: a thread compute the recipient and send a message using the thread destinaiton with the node and cost.
+
+\subsubsection{Terminate condition}
+\label{terminate}
+
+When a thread has his OPEN set empty or there isn't elements that will improve the cost of the path sets his termiantion\_flag. A thread waits on his condition variable if have no message pending and his termiantion flag is set, if all other threds are waiting the program terminates instead.
+
+\begin{alltt}
+    1 lock_mutex
+    2 while termination_flags[this_thread] and
+    BUFFER(this_thread) = 0 and not program_terminated
+    3   if(counter \( \geq \) n_threads - 1 and all buffer empty
+    4       program_terminated = 1
+    5       signal all condition variables
+    6   else
+    7       counter++
+    8       wait on cv of this_thread
+    9       counter--
+    10 mutex unlock
+    11 if(program_terminated)
+    12  return true
+    13 else
+    14  return false
+\end{alltt}
+
+Where
+\begin{itemize}
+    \item $termination\_flags$: array of flags setted by a thread when the OPEN set is empty or doesn't have node with a minor cost then the acutal path
+    \item $program_terminated$: flag setted by last thread awake when detects termination of the program
+    \item $counter$: counter of sleeping threads
+    \item $mutex$: one mutex to protect all condition variables
+    \item $BUFFER$: message queue of each thread
+\end{itemize}
+
