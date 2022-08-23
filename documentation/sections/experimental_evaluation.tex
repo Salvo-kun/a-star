@@ -1,57 +1,72 @@
 \section{Experimental evaluation}
 \label{Sec:experimental-eval}
 
-Here we report all the test executed to compare the performance between the sequential and parallel version of the A-Star implementation.
-All the test are performed on a Linux environment.
+Here we report the result of the tests executed to compare the performance between the sequential and parallel version of the A-Star implementation.\\
+To test the parallel A* algorithm we changed the number of threads and the function used to compute the recipient (\ref{compute_reci}). \\
+All the tests are performed on a Linux environment.
 
-\subsection{performance}
+\subsection{Time performance}
+
+
 
 \subsubsection{Grid Milan}
 The graph generated from the grid of Milan (1024x1024) has around 800k nodes and has random generated weights to increase the difficulty to find the path with the best cost.
 
 \begin{figure}
     \centering
-    \includegraphics[scale=0.7]{../assets/gridMilan.png}
+    \includegraphics[scale=0.7]{gridMilan.png}
     \caption{Milan map with path found}
-    \label{Milan grid}
+    \label{Milan-grid}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[scale=0.7]{../assets/milanComparison.png}
+    \includegraphics[scale=0.7]{milanComparison.png}
     \caption{Performance comparison on different algorithms}
-    \label{Milan comp}
+    \label{Milan-comp}
 \end{figure}
 
 \begin{figure}
     \centering
     \includegraphics[scale=0.7]{milanParComparison.png}
     \caption{Performance comparison on different thread number and compute recipient function}
-    \label{Milan par comp}
+    \label{Milan-par-comp}
 \end{figure}
 
 
-Looking at the Figure \ref{Milan comp}, and considering that we choosed the best efficient number of threads for the parallel A*, 
-we can notice a better performance compare to the sequential A* and the Dijkstra algorithms. 
-To find the best result we tried the parallel A* changing the number of threads and the compute recipient function,
-the Figure \ref{Milan par comp} shows all the experimental results of the tests.
-Comparing the two compute recipient functions (simple module and multiplicative hash \ref{compute_reci})
-on this relative small graph, the performance are comparable except on a big number of threads.
+Looking at Figure \ref{Milan-comp}, and taking into account that we chose the most efficient number of threads for parallel A*,
+we can notice a better performance compared to the sequential A* and the Dijkstra algorithms. 
+To find the best result we tried the parallel A* changing the number of threads and the compute recipient function:
+the Figure \ref{Milan-par-comp} shows all the experimental results of the tests.
+\\
+Comparing the two compute recipient functions (simple module and multiplicative hash)
+on this relative small graph, it can be observed that when runnig with limited number of threads the performance are similar.
+When increasing the level of parallelism the performances are no loger comparable, and the algorithm with the multiplicative hash function is faster.
 
 
-\subsubsection{Big Map}
+\subsubsection{Large Map}
 
-To test more our algorithm we used a bigger graph, always with random weights, with about 4 Millions nodes.
+To test more our algorithms we used larger graphs, always with random weights, with about 4 Millions nodes.
 
 \begin{figure}
     \centering
     \includegraphics[scale=0.7]{mapParComparison.png}
-    \caption{TODO}
+    \label{Map-par-comp}
+    
+    \includegraphics[scale=0.7]{mapParComparisonLines.png}
+    \label{Map-par-comp-lines}
+    \caption{Performance comparison on different thread number and compute recipient function}
 \end{figure}
 
 
-
-
+By looking at the results on Figure \ref{Map-par-comp}, it can be observed that the multiplicative hash function is more stable when changing the number of threads.
+For small level of parallelism (eg. 3 threads) the module hash needs almost two hours to found the correct path, while exploring and revisiting a large number of nodes.
+The seconds needed to find a path decreses considerably with the increasing of the number of threads, but for some value (mostly even values of threads eg. 12), the time to converge to a result greaty increases again.
+The multiplicative hash instead, has generally better performances, but we found some limits on the number of threads (again even values from 16 onwards) beyond which the time increases.
 
 
 \subsection{memory occupation}
+
+
+
+

@@ -3,13 +3,13 @@
 
 The A-Star algorithm is based on the use of a heuristic function which exstimates the cost from a point to a destination node.
 
-Both implementations are based on two set, the OPEN and the CLOSE one. The first is implemented using a priority queue (our heap \ref{heap}) and contains nodes that have been discovered but not expanded yet. The other one with a hash table \ref{hash_table} and contains node that have been expanded.
+Both implementations are based on two set, the OPEN and the CLOSE one. The first is implemented using a priority queue (our heap \ref{heap}) and contains nodes that have been discovered but not expanded yet, the other one with a hash table (\ref{hash_table}) and contains node that have been expanded.
 
-All vertex contains a link to a parent vertex which is used to keep trace of the path found by the algorithm, at the end the solution is inserted in a stack \ref{stack} pushing from the goal node and going backward.
+All vertex contains a link to a parent vertex which is used to keep trace of the path found by the algorithm, at the end the solution is inserted in a stack (\ref{stack}) pushing from the goal node and going backward.
 
 \subsection{Sequential}
 
-Starting from the pseudo-code taken from (insert bibliography)
+Starting pseudo-code taken from (insert bibliography)
 
 \begin{alltt}
     1 Initialize OPEN to \{s_0\};
@@ -39,17 +39,20 @@ Starting from the pseudo-code taken from (insert bibliography)
 Where
 \begin{itemize}
     \item $s_0$ : is the starting node
-    \item $g(n)$ : is the best known cost of the path from $s_0$ to $n$
+    \item $g(n)$ : is the cost of the best known path from $s_0$ to $n$
     \item $h(n)$ : is the heuristic function
-    \item $f(n)$ : is the sum $g(n) + h(n)$ is used in the OPEN set to calculate the priority
+    \item $f(n)$ : is the sum $g(n) + h(n)$, used in the OPEN set to calculate the priority
 \end{itemize}
 
 \subsection{Parallel}
 
-Implementation of the decentralized AStar algorithm, where each thread has its own CLOSED and OPEN set, when a thread discover a neighbor node chose the thread that will expand it.
-When a thread find a solution compare the cost with the global one and if have a lower cost it just copies the cost (the global cost is protected with a lock).
+Implementation of the decentralized AStar algorithm, where each thread has its own CLOSED and OPEN set, when a thread discovers a neighbouring node choses the thread that will expand it and sends a message to it.
+\\
+When a thread find a solution, it compares the cost with the global one and if it has a lower cost, it just change the cost with the new one (the global cost is protected with a lock).
 
 \subsubsection{Pseudo-code}
+
+Starting pseudo-code taken from (insert biblio)
 
 \begin{alltt}
     1 Initialize OPENp for each thread p;
@@ -91,19 +94,25 @@ When a thread find a solution compare the cost with the global one and if have a
 
 Where
 \begin{itemize}
-    \item $BUFFER$ : is the structure for thread communication \ref{thread_buf}
-    \item $incumbent$ :  the shared best known path
+    \item $BUFFER$ : structure used for thread communication (\ref{thread_buf})
+    \item $incumbent$ : the shared best known path
     \item $TerminateDetection$ : function to check if the path search is completed \ref{terminate}
-    \item $ComputeRecipient$ : function to chose the thread that will expand the node \ref{compute_reci}
+    \item $ComputeRecipient$ : function that choses the thread that will expand the node (\ref{compute_reci})
 \end{itemize}
 
 \subsubsection{Compute recipient}
 \label{compute_reci}
 
-A Funciton to map the nodeId into a thread identifier we have 2 implementaitons.
-The basic module computed as  $node\_id \; \% \;  number\_of\_threads$ .
-A implementation of multiplicative hashing: \\
-$ h(node\_id) =((a*node\_id \; + \; b) \; \% \; p) \; \% \; number\_of\_threads $  \\ where:
+A Function that is able to map the nodeId into a thread identifier, and which is used to decide to which thread send a message with the node to expand.
+This function can considerably change the performance of the algorithm.
+\\ We provided two different implementation:
+\\
+The basic module is the simplest one and it is computed as: \\
+$node\_id \; \% \;  number\_of\_threads$
+\\
+A more efficient function, but still simple to implement, is the multiplicative hashing computed as: \\
+$ h(node\_id) =((a*node\_id \; + \; b) \; \% \; p) \; \% \; number\_of\_threads $  
+\\ where:
 \begin{itemize}
     \item $p$: prime large number (we used INT\_MAX =  $ 2^{31}-1 $)
     \item $a$: random integer [1,p-1]
@@ -115,37 +124,39 @@ InsertBiblio?
 \subsubsection{Thread communication}
 \label{thread_buf}
 
-A message queue \ref{message_queue} structure is used to allows threads to communicate: a thread compute the recipient and send a message using the thread destinaiton with the node and cost.
+A message queue \ref{message_queue} structure is used to allows threads to communicate: a thread compute the recipient and send a message using the thread destination with the node and cost. 
 
 \subsubsection{Terminate condition}
 \label{terminate}
 
-When a thread has his OPEN set empty or there isn't elements that will improve the cost of the path sets his termiantion\_flag. A thread waits on his condition variable if have no message pending and his termiantion flag is set, if all other threds are waiting the program terminates instead.
+When a thread has its OPEN set empty or there isn't elements that will improve the cost of the path, it sets its termination\_flag.
+A thread waits on his condition variable only if it has no message pending and its termination\_flag is set, if all other threads are waiting the program terminates instead.
+When a thread sends a message to another one it signal its condition variable in order to waking it up. 
 
 \begin{alltt}
-    1 lock_mutex
+    1 lock mutex
     2 while termination_flags[this_thread] and
-    BUFFER(this_thread) = 0 and not program_terminated
-    3   if(counter \( \geq \) n_threads - 1 and all buffer empty
+    BUFFER(this_thread) = 0 AND not program_terminated
+    3   if(counter \( \geq \) n_threads - 1 AND all buffer empty
     4       program_terminated = 1
     5       signal all condition variables
     6   else
     7       counter++
-    8       wait on cv of this_thread
+    8       wait on condition variable of this_thread
     9       counter--
-    10 mutex unlock
-    11 if(program_terminated)
-    12  return true
+    10 unlock mutex
+    11 if program_terminated
+    12   return true
     13 else
-    14  return false
+    14   return false
 \end{alltt}
 
 Where
 \begin{itemize}
-    \item $termination\_flags$: array of flags setted by a thread when the OPEN set is empty or doesn't have node with a minor cost then the acutal path
-    \item $program_terminated$: flag setted by last thread awake when detects termination of the program
+    \item $termination\_flags$: array of flags setted by a thread when the OPEN set is empty or does not has any node with a minor cost then the actual path
+    \item $program\_terminated$: flag setted by last thread awake when it detects the termination of the program
     \item $counter$: counter of sleeping threads
-    \item $mutex$: one mutex to protect all condition variables
+    \item $mutex$: global mutex to protect all condition variables
     \item $BUFFER$: message queue of each thread
 \end{itemize}
 
