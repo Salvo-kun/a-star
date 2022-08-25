@@ -10,8 +10,8 @@ The available versions are:
 
 - [About](#about)
 - [Getting Started](#getting_started)
-- [Installing](#installing)
 - [Usage](#usage)
+- [Graph generation](#graph-generation)
 - [Contributing](#contributing)
 
 ----------------------------------------------------------
@@ -28,12 +28,10 @@ The program receives as input `.txt` files with the following format:
 
 A set of different benchmarks are provided inside the project (`.map` files).
 
-## Installing
-
 
 ## Usage
 The program can be built using `make` command from a linux shell.  
-To run the program use `.\bin\aStar [OPTION...] IN_FILE`
+To run the program use `./bin/aStar [OPTION...] IN_FILE`
 
 To choose the algorithm use `-a ALGORITHM` where ALGORITHM can be:
 - 0 for Dijkstra
@@ -46,18 +44,45 @@ To choose the domain use `-d DOMAIN` where DOMAIN can be:
 To choose the heuristic use `-e HEURISTIC` where HEURISTIC can be:
 - 0 for Manhattan distance for 2D grids
 
-To choose hash function of parallel A* use `-h HASH` where HASH ca be:
-- 0 forModule hash
-- 1 for Multiplicative hash
+To choose hash function of parallel A* use `-h HASH` where HASH can be:
+- 0 for Module hash
+- 1 for Multiplicative hash (suggested)
 
-To choose the output file use `-o OUTPUT_FILE`
+To choose the output file use `-o OUTPUT_FILE`, if not specified the default is stdout
 
 To choose the number of threads used by the parallel A* use `-t NUMBER_OF_THREADS`
 
-Run `./bin/aStar --help` and `.\bin\aStar --usage` in the root folder of the project to get additional info about it.
+Run `./bin/aStar --help` and `./bin/aStar --usage` in the root folder of the project to get additional info about it.
 
 _Example of parallel A* usage_:
-`.\bin\aStar -a 2 -h 1 -t 4 -o .\output_file.txt .\input_file.txt`
+`./bin/aStar -a 2 -h 1 -t 4 -o ./output_file.txt ./input_file.txt`
+
+-----------------------------------
+
+## Graph generation
+
+The project includes a python3 script to generate the proper files needed by the A-Star program.
+The script translate a .map file in a .txt ones with random weights for the edges.
+
+### Usage
+
+To generate the graph use the command `python3 ./benchmarks/graph_generator.py IN_FILE.map  OUT_FILE.txt  GRID_DIMENSION  MAX_WEIGHT`
+
+_Example of graph generation usage_:
+`python3 ./benchmarks/graph_generator.py ./benchmarks/street-maps/raw/Milan_0_1024.map ./output_file.txt 1024 100`
+
+------------------------------------------
+
+## Path plot
+
+The project includes a python3 script to draw the path found by the A-Star program inside a map.
+
+### Usage
+
+To plot the path use the command `python3 ./benchmarks/graph_plotter.py IN_FILE.map  OUT_FILE.png  GRID_DIMENSION ./path_found.txt`
+
+_Example of path plot usage_:
+`python3 ./benchmarks/graph_plotter.py ./benchmarks/street-maps/raw/Milan_0_1024.map  ./output_file.png  1024 ./path_found.txt`
 
 
 ## Contributing

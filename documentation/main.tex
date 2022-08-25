@@ -4,6 +4,12 @@
 \usepackage{hyperref}
 \usepackage{tabularx}
 \usepackage{alltt}
+\usepackage{biblatex}
+\usepackage{caption}
+
+\usepackage[a4paper,total={6in, 8in}]{geometry}
+
+\addbibresource{references.bib}
 
 
 \graphicspath{{assets/}}
@@ -15,6 +21,8 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TITLE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \title{PARALLEL A-STAR}
+
+\tableofcontents
 
 \author{
     Salvatore Licata \\
@@ -36,12 +44,10 @@
 \input{sections/parallelism.tex}
 \input{sections/experimental_evaluation.tex}
 \input{sections/Pos_Enhancement.tex}
-\input{sections/summary.tex}
+
+\nocite{*}
+\printbibliography
 
 
-\bibliographystyle{plain}
-\bibliography{references}
-
-\input{sections/appendix}
 \end{document}
 

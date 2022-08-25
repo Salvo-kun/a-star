@@ -9,7 +9,7 @@ All vertex contains a link to a parent vertex which is used to keep trace of the
 
 \subsection{Sequential}
 
-Starting pseudo-code taken from (insert bibliography)
+Starting from pseudo-code \cite{bibParAstar}
 
 \begin{alltt}
     1 Initialize OPEN to \{s_0\};
@@ -52,7 +52,7 @@ When a thread find a solution, it compares the cost with the global one and if i
 
 \subsubsection{Pseudo-code}
 
-Starting pseudo-code taken from (insert biblio)
+Starting from pseudo-code \cite{bibParAstar}
 
 \begin{alltt}
     1 Initialize OPENp for each thread p;
@@ -110,7 +110,7 @@ This function can considerably change the performance of the algorithm.
 The basic module is the simplest one and it is computed as: \\
 $node\_id \; \% \;  number\_of\_threads$
 \\
-A more efficient function, but still simple to implement, is the multiplicative hashing computed as: \\
+A more efficient function, but still simple to implement, is the multiplicative hashing computed as \cite{bibVideoMulHash}: \\
 $ h(node\_id) =((a*node\_id \; + \; b) \; \% \; p) \; \% \; number\_of\_threads $  
 \\ where:
 \begin{itemize}
@@ -119,7 +119,6 @@ $ h(node\_id) =((a*node\_id \; + \; b) \; \% \; p) \; \% \; number\_of\_threads 
     \item $b$: random integer [0,p-1]
 \end{itemize}
 
-InsertBiblio?
 
 \subsubsection{Thread communication}
 \label{thread_buf}

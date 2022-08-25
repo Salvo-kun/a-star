@@ -8,23 +8,27 @@ All the tests are performed on a Linux environment.
 \subsection{Time performance}
 
 
-
 \subsubsection{Grid Milan}
 The graph generated from the grid of Milan (1024x1024) has around 800k nodes and has random generated weights to increase the difficulty to find the path with the best cost.
 
-\begin{figure}
-    \centering
-    \includegraphics[scale=0.7]{gridMilan.png}
-    \caption{Milan map with path found}
-    \label{Milan-grid}
-\end{figure}
+\begin{center}
+    
+    \begin{minipage}[b]{0.3\textwidth}
 
-\begin{figure}
-    \centering
-    \includegraphics[scale=0.7]{milanComparison.png}
-    \caption{Performance comparison on different algorithms}
-    \label{Milan-comp}
-\end{figure}
+            \includegraphics[scale=0.5]{gridMilan.png}
+            \captionof{figure}{Milan map with path found}
+            \label{Milan-grid}
+        
+    \end{minipage}%
+    \begin{minipage}[b]{0.6\textwidth}
+        
+            \includegraphics[scale=0.7]{milanComparison.png}
+            \captionof{figure}{Performance comparison on different algorithms}
+            \label{Milan-comp}
+    \end{minipage}
+    
+\end{center}
+
 
 \begin{figure}
     \centering
