@@ -1,13 +1,14 @@
 \section{Basic structures}
 \label{Sec:basic_structures}
 
-The project started implementing all the basic structures needed by the algorithm. All the structures are as generic as possible to encourage reuse and are dynamically allocated and implemented using lists to have no static limitations. \\
-Each structure have a create function for allocation and a destroy one for disallocation of the memory.
+The project started by implementing all the basic structures needed by the algorithm, which are as generic as possible to encourage reuse and are dynamically allocated and implemented using lists to have no static limitations.
+\\
+Each structure has a create function for allocation and a destroy one for disallocation of the memory.
 
 \subsection{hash table}
 \label{hash_table}
 
-Is implemented with multiplicative modular method with golden ratio:
+It is implemented with multiplicative modular method with golden ratio:
 
 \begin{equation}
     golden\_ratio = (\sqrt{5} - 1)/2
@@ -19,30 +20,31 @@ Is implemented with multiplicative modular method with golden ratio:
     hash(key, module) = ((key*golden\_ratio)\%P)\%module
 \end{equation}
 
-The structures re-allocates itself when reaches the 3/4 of the maximum capacity, in case of collisions concatenate the elements in a list (keeps in the first place the last inserted item).
+The structure re-allocates itself when reaches the 3/4 of the maximum capacity, in case of collisions it concatenates the elements in a list (keeps in the first place the last inserted item).
 
 \subsection{heap}
 \label{heap}
 
-The heap structures uses hash table for faster addressing and is used as a priority queue with the possibility to have MAX or MIN priority as first element.
+It uses a hash table for faster addressing and it is used as a priority queue, with the possibility to have MAX or MIN priority as first element.
 
 \subsection{queue}
 
-A generic list with Head and Tail pointers to an item. FIFO queue with head extraction and tail insertion.
+Generic list with head and tail pointers to an item. FIFO queue with head extraction and tail insertion.
 
 \subsection{stack}
 \label{stack}
 
-LIFO implementation with both insertion and extraction on the head.
+LIFO implementation with both insertion and extraction from the head.
 
 \subsection{graph}
 
-Generic Graph with possibility to be UNDIRECTED or DIRECTED, have a pointer to a generic data (usefull when creating the graph from different domains such as 2D or 3D maps, can be passed a custom function as parameter to properly read all the additional data). \\
+Generic Graph with possibility to be UNDIRECTED or DIRECTED, has a pointer to a generic data (useful when creating the graph from different domains such as 2D or 3D maps). A custom function can be passed as a parameter to properly read all the additional data. \\
 Each vertex has a true\_cost, which is the cost of the path from the start to that specific vertex, and a heuristic\_cost, an exstimation of the cost from that node to the destination node.
-The graph also contains a Hash table of all the nodes used to search efficiently (a good improvement in the graph generation).
+The graph also contains a hash table of all the nodes used to search efficiently (a good improvement in the graph generation).
 
 \subsection{message queue}
 \label{message_queue}
 
-It is composed by a vector of queues, as long as the number of threads of the program.
-The receive and send method are protected by a mutex to avoid race conditions, and receive an Id to send a message to a specific queue. It also has a function to check if all the queues are empty, which is used for the terminate detection.
+It is composed by an array of queues, as long as the number of threads of the program.
+The receive and send methods are protected by a mutex to avoid race conditions, and receive an Id to send/receive a message to/from a specific queue. 
+It also has a function to check if all the queues are empty, which is used in the parallel A* algorithm for the terminate detection.

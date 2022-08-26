@@ -1,9 +1,9 @@
 \section{Possible Enhancement}
 \label{Sec:enhancement}
 
-Looking at the experimental results (\ref{Sec:experimental-eval}) our parallel A* implementation has good performance, 
-but we thought at some Enhancement for our algorithm.
-
+Looking at the experimental results (Section \ref{Sec:experimental-eval}) our parallel A* implementation has good performance, 
+but we thought at some enhancement for our algorithm.
+In particular:
 \begin{itemize}
     \item parallelization of graph reading
     \item implementation of abstract zobrist hashing for the compute recipient function
@@ -18,7 +18,7 @@ but we did't find an efficient way to parallize it at thread level.
 
 \subsection{Abstract zobrist hashing}
 
-Looking at the experimental tests \ref{Sec:experimental-eval} we understood the importance of a good hash function.
+Looking at the experimental tests (Section \ref{Sec:experimental-eval}) we understood the importance of a good hash function.
 Many scientific papers explain that the abstract zobrist hashing should have better performances than the multiplicative,
 because it can balance more the load of the threads and minimized the communication overhead.
 We tried to implement it achieving poor results and, since it needed to store additional data inside the graph, it penalized 

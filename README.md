@@ -12,6 +12,7 @@ The available versions are:
 - [Getting Started](#getting_started)
 - [Usage](#usage)
 - [Graph generation](#graph-generation)
+- [Drawing path](#drawing-path)
 - [Contributing](#contributing)
 
 ----------------------------------------------------------
@@ -64,7 +65,7 @@ _Example of parallel A* usage_:
 The project includes a python3 script to generate the proper files needed by the A-Star program.
 The script translate a .map file in a .txt ones with random weights for the edges.
 
-### Usage
+#### Usage
 
 To generate the graph use the command `python3 ./benchmarks/graph_generator.py IN_FILE.map  OUT_FILE.txt  GRID_DIMENSION  MAX_WEIGHT`
 
@@ -73,11 +74,11 @@ _Example of graph generation usage_:
 
 ------------------------------------------
 
-## Path plot
+## Drawing path
 
 The project includes a python3 script to draw the path found by the A-Star program inside a map.
 
-### Usage
+#### Usage
 
 To plot the path use the command `python3 ./benchmarks/graph_plotter.py IN_FILE.map  OUT_FILE.png  GRID_DIMENSION ./path_found.txt`
 
@@ -87,6 +88,6 @@ _Example of path plot usage_:
 
 ## Contributing
 
-Salvatore Licata
-Alessandro Zamparutti
+Salvatore Licata,
+Alessandro Zamparutti,
 Lorenzo Ferro
