@@ -1,30 +1,33 @@
 \section{Experimental evaluation}
 \label{Sec:experimental-eval}
 
-Here we report the result of the tests executed to compare the performance between the sequential and parallel version of the A-Star implementation.\\
-To test the parallel A* algorithm we changed the number of threads and the function used to compute the recipient (\ref{compute_reci}). \\
+Here we report the results of the tests executed to compare the performances between the sequential and parallel versions of the A* implementation.
+\\
 All the tests are performed on a Linux environment.
 
 \subsection{Time performance}
 
+To test the parallel A* algorithm we changed the number of threads and the function used to compute the recipient (\ref{compute_reci}), while using the same input data (same map, same starting node and destination node),
+then we compared the results with the ones from the sequential A*. 
 
 \subsubsection{Grid Milan}
-The graph generated from the grid of Milan (1024x1024) has around 800k nodes and has random generated weights to increase the difficulty to find the path with the best cost.
+The graph generated from the grid of Milan (1024x1024) has around 800k nodes and has randomly generated weights to increase the difficulty to find the path with the best cost.
+\\
+The Figure \ref{Milan-grid} represents a drawing of the path found by the algorithms with the data that we used for testing.
 
 \begin{center} 
     \begin{minipage}[b]{0.3\textwidth}
-            \centering
-            \includegraphics[scale=0.5]{gridMilan.png}
-            \captionof{figure}{Milan map with path found}
-            \label{Milan-grid}
-        
+        \centering
+        \includegraphics[scale=0.5]{gridMilan.png}
+        \captionof{figure}{Milan map with path found}
+        \label{Milan-grid}
     \end{minipage}%
     \hspace{0.5cm}
     \begin{minipage}[b]{0.6\textwidth}
-            \centering
-            \includegraphics[scale=0.7]{milanComparison.png}
-            \captionof{figure}{Performance comparison on different algorithms}
-            \label{Milan-comp}
+        \centering
+        \includegraphics[scale=0.7]{milanComparison.png}
+        \captionof{figure}{Performance comparison between different algorithms on grid Milan}
+        \label{Milan-comp}
     \end{minipage} 
 \end{center}
 
@@ -32,7 +35,7 @@ The graph generated from the grid of Milan (1024x1024) has around 800k nodes and
 \begin{figure}
     \centering
     \includegraphics[scale=0.7]{milanParComparison.png}
-    \caption{Performance comparison on different thread number and compute recipient function}
+    \caption{Performance comparison with different thread number and compute recipient function}
     \label{Milan-par-comp}
 \end{figure}
 
@@ -43,8 +46,8 @@ To find the best result we tried the parallel A* changing the number of threads 
 the Figure \ref{Milan-par-comp} shows all the experimental results of the tests.
 \\
 Comparing the two compute recipient functions (simple module and multiplicative hash)
-on this relative small graph, it can be observed that when running with limited number of threads the performance are similar.
-With the increase of the level of parallelism the performances are no loger comparable, and the algorithm with the multiplicative hash function is faster.
+on this relatively small graph, it can be observed that when running with limited number of threads the performances are similar.
+With the increase of the level of parallelism the performances are no longer comparable, and the algorithm with the multiplicative hash function is faster.
 
 
 \subsubsection{Large Map}
@@ -57,7 +60,7 @@ To better test our algorithms we used larger graphs, always with random weights,
     \begin{minipage}[b]{0.5\textwidth}
             \centering
             \includegraphics[scale=0.5]{mapParComparison.png}
-            \captionof{figure}{Performance comparison on different thread number and compute recipient function}
+            \captionof{figure}{Performance comparison with different thread number and compute recipient function}
             \label{Map-par-comp}
         
     \end{minipage}%
@@ -65,7 +68,7 @@ To better test our algorithms we used larger graphs, always with random weights,
     \begin{minipage}[b]{0.4\textwidth}
             \centering
             \includegraphics[scale=0.4]{mapParComparisonLines.png}
-            \captionof{figure}{Tendency comparison on different thread number and compute recipient function}
+            \captionof{figure}{Tendency comparison with different thread number and compute recipient function}
             \label{Map-par-comp-lines}
     \end{minipage} 
 \end{center}
@@ -73,17 +76,17 @@ To better test our algorithms we used larger graphs, always with random weights,
 \vspace{0.5cm}
 
 By looking at the results on Figure \ref{Map-par-comp}, it can be observed that the multiplicative hash function is more stable when changing the number of threads.
-For small level of parallelism (eg. 3 threads) the module hash needs almost two hours to found the correct path, while exploring and revisiting a large number of nodes.
-The seconds needed to find a path decreses considerably with the increasing of the number of threads, but for some value (mostly even values of threads eg. 12), the time to converge to a result greaty increases again.
+For small level of parallelism (eg. 3 threads) the module hash needs almost two hours to find the correct path, while exploring and revisiting a large number of nodes.
+The seconds needed to find a path decrease considerably when increasing the number of threads, but for some values (mostly even values of threads eg. 12), the time to converge to a result greatly increases again.
 The multiplicative hash instead, has generally better performances, but we found some limits on the number of threads (again even values from 16 onwards) beyond which the time increases.
 
 
-\subsection{memory occupation}
+\subsection{Memory occupation}
 
-To track the memory occupation we used the Valgrind-Massif tool which is a heap profiler. It measures how much heap memory the program uses: this includes both the useful space,
+To track the memory occupation we used the Valgrind-Massif \cite{bibValgrind} tool which is a heap profiler. It measures how much heap memory the program uses: this includes both the useful space,
 and the extra bytes allocated for book-keeping and alignment purposes.
 \\
-The graph generated shows the memory occupation on specific time snapshots. The X axis indicates the bytes allocated/deallocated on the heap and stack(s), while the Y axis shows the actual memory occupation on that specific snapshot.
+The graph generated by the program shows the memory occupation on specific time snapshots. The X axis indicates the bytes allocated/deallocated on the heap and stack(s), while the Y axis shows the actual memory occupation on that specific snapshot.
 
 \vspace{0.5cm}
 
@@ -118,10 +121,10 @@ The graph generated shows the memory occupation on specific time snapshots. The 
 
 \vspace{0.5cm}
 
-As expected the occupation of the sequential A* is lower, since it has only one OPEN and CLOSED sets and it does not need to allocate additional structures for threads communication and synchronization.
-It can be also noticed the difference between the sum of all the allocation made by the two algorithms (19 GB allocated totally by parallel A* against almost 2 GB by sequential A* for the Milan grid).
+As expected the memory occupation of the sequential A* is lower, since it has only one OPEN set and one CLOSED set, and it does not need to allocate additional structures for threads communication and synchronization.
+It can be also noticed the difference between the sum of all the allocation made by the two algorithms (78 GB allocated totally by parallel A* on Figure \ref{mem-par-map} against 9 GB by sequential A* for the large map on Figure \ref{mem-seq-map}).
 \\
-To ensure that there are not memory leak we used an option of the Valgrind tool which keeps track of all heap blocks issued in response to calls to malloc.
+To ensure that there are no memory leaks we used an option of the Valgrind tool which keeps track of all heap blocks issued in response to calls to malloc.
 As shown by the the Figure \ref{mem-leak-milan} the algorithm does not have any memory leakage.
 
 \begin{figure}[h]

@@ -1,13 +1,13 @@
 \section{A-Star Implementation}
 \label{Sec:implementation}
 
-The A-Star algorithm is based on the use of a heuristic function which exstimates the cost from a point to a destination node.
+A-Star is a best-first search algorithm based on the use of a heuristic function which estimates the cost from a point to a destination node.
 
 Both implementations are based on two set, the OPEN and the CLOSE one. The first is implemented using a priority queue (our heap \ref{heap}) and contains nodes that have been discovered but not expanded yet, the second with a hash table (\ref{hash_table}) and contains nodes that have been expanded.
 
 All vertexs contains a link to a parent vertex which is used to keep trace of the path found by the algorithm, at the end the solution is inserted in a stack (\ref{stack}) pushing from the goal node and going backward.
 
-\subsection{Sequential}
+\subsection{Sequential A*}
 
 Starting from pseudo-code \cite{bibParAstar}
 
@@ -19,7 +19,7 @@ Starting from pseudo-code \cite{bibParAstar}
     5 if n is a goal node then
     6   Return solution path from \(s_0\) to n;
     7 for every successor n' of n do
-    8   $g_1$ = g(n) + c(n; \(n'\));
+    8   g_1 = g(n) + c(n; \(n'\));
     9   if n' \(\in\) CLOSED then
     10      if g_1 < g(n') then
     11          Remove n' from CLOSED and add it to OPEN;
@@ -27,12 +27,12 @@ Starting from pseudo-code \cite{bibParAstar}
     13          Continue;
     14  else
     15      if n' \(\notin\) OPEN then
-    16          Add $n'$ to OPEN;
-    17      else if $g_1$ \(\geq\) g($n'$) then
+    16          Add n' to OPEN;
+    17      else if g_1 \(\geq\) g(n') then
     18          Continue;
-    19  Set g($n'$) = g_1;
-    20  Set f($n'$) = g($n'$) + h($n'$);
-    21  Set parent($n'$) = n;
+    19  Set g(n') = g_1;
+    20  Set f(n') = g(n') + h(n');
+    21  Set parent(n') = n;
     22 Return failure (no path exists);
 \end{alltt}
 
@@ -44,7 +44,7 @@ Where
     \item $f(n)$ : is the sum $g(n) + h(n)$, used in the OPEN set to calculate the priority
 \end{itemize}
 
-\subsection{Parallel}
+\subsection{Parallel A*}
 
 Implementation of the decentralized AStar algorithm, where each thread has its own CLOSED and OPEN set.
 When a thread discovers a neighbouring node it choses the thread that will expand it and sends a message to it.
@@ -106,19 +106,25 @@ Where
 
 A Function that is able to map the nodeId into a thread identifier, and which is used to decide to which thread send a message to with the node to expand.
 This function can considerably change the performance of the algorithm.
-\\ We provided two different implementation:
+\\ 
+We provided two different implementation:
 \\
 The basic module is the simplest one and it is computed as: \\
-$node\_id \; \% \;  number\_of\_threads$
-\\
+\begin{center}
+    $node\_id \; \% \;  number\_of\_threads$
+\end{center}
+
 A more efficient function, but still simple to implement, is the multiplicative hashing computed as \cite{bibVideoMulHash}: \\
-$ h(node\_id) =((a*node\_id \; + \; b) \; \% \; p) \; \% \; number\_of\_threads $  
-\\ where:
-\begin{itemize}
-    \item $p$: large prime number (we used INT\_MAX =  $ 2^{31}-1 $)
-    \item $a$: random integer [1,p-1]
-    \item $b$: random integer [0,p-1]
-\end{itemize}
+\begin{center}
+    $ h(node\_id) =((a*node\_id \; + \; b) \; \% \; p) \; \% \; number\_of\_threads $  
+    \\ 
+    where:
+    \begin{itemize}
+        \item $p$: large prime number (we used INT\_MAX =  $ 2^{31}-1 $)
+        \item $a$: random integer [1,p-1]
+        \item $b$: random integer [0,p-1]
+    \end{itemize}
+\end{center}
 
 
 \subsubsection{Thread communication}
@@ -137,7 +143,7 @@ When a thread sends a message to another one, it signals its condition variable 
     1 lock mutex
     2 while termination_flags[this_thread] and
     BUFFER(this_thread) = 0 AND not program_terminated
-    3   if(counter \( \geq \) n_threads - 1 AND all buffer empty
+    3   if counter \( \geq \) n_threads - 1 AND all buffer empty
     4       program_terminated = 1
     5       signal all condition variables
     6   else
