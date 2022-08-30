@@ -12,27 +12,27 @@ All vertexs contains a link to a parent vertex which is used to keep trace of th
 Starting from pseudo-code \cite{bibParAstar}
 
 \begin{alltt}
-    1 Initialize OPEN to \{s_0\};
-    2 while OPEN \(\neq\) 0; do
-    3 Get and remove from OPEN a node n with a smallest f(n);
-    4 Add n to CLOSED;
-    5 if n is a goal node then
-    6   Return solution path from \(s_0\) to n;
-    7 for every successor n' of n do
-    8   g_1 = g(n) + c(n; \(n'\));
-    9   if n' \(\in\) CLOSED then
-    10      if g_1 < g(n') then
-    11          Remove n' from CLOSED and add it to OPEN;
-    12      else
-    13          Continue;
-    14  else
-    15      if n' \(\notin\) OPEN then
-    16          Add n' to OPEN;
-    17      else if g_1 \(\geq\) g(n') then
-    18          Continue;
-    19  Set g(n') = g_1;
-    20  Set f(n') = g(n') + h(n');
-    21  Set parent(n') = n;
+    1 Initialize OPEN to s_0;
+    2 {\bf while} OPEN \(\neq\) 0 {\bf do}
+    3    Get and remove from OPEN a node n with a smallest f(n);
+    4    Add n to CLOSED;
+    5   {\bf if} n is a goal node {\bf then}
+    6       Return solution path from \(s_0\) to n;
+    7   {\bf for} every successor n' of n {\bf do}
+    8       g_1 = g(n) + c(n, n');
+    9      {\bf if} n' \(\in\) CLOSED {\bf then}
+    10         {\bf if} g_1 < g(n') {\bf then}
+    11             Remove n' from CLOSED and add it to OPEN;
+    12         {\bf else}
+    13             continue;
+    14     {\bf else}
+    15         {\bf if} n' \(\notin\) OPEN {\bf then}
+    16             Add n' to OPEN;
+    17         {\bf else if} g_1 \(\geq\) g(n') {\bf then}
+    18             continue;
+    19     Set g(n') = g_1;
+    20     Set f(n') = g(n') + h(n');
+    21     Set parent(n') = n;
     22 Return failure (no path exists);
 \end{alltt}
 
@@ -60,37 +60,37 @@ Starting from pseudo-code \cite{bibParAstar}
     2 Initialize incumbent.cost = \(\infty\);
     3 Add s0 to OPENComputeRecipient(s0);
     4 In parallel, on each thread p, execute 5-31;
-    5 while TerminateDetection() do
-    6   while BUFFERp \(\neq\) 0 ; do
-    7       Get and remove from BUFFERp a triplet (n0; g1; n);
-    8       if n0 2 CLOSEDp then
-    9           if g1 < g(n0) then
-    10              Remove n0 from CLOSEDp and add it to OPENp;
-    11             else
-    12                  Continue;
-    13      else
-    14          if n0 =2 OPENp then
-    15              Add n0 to OPENp;
-    16          else if g1  g(n0) then
+    5 {\bf while} TerminateDetection() {\bf do}
+    6    {\bf while} BUFFERp \(\neq\) 0 {\bf do}
+    7       Get and remove from BUFFERp a triplet (n', g1, n);
+    8       {\bf if} n' \(\in\) CLOSEDp {\bf then}
+    9           {\bf if} g1 < g(n') {\bf then}
+    10              Remove n' from CLOSEDp and add it to OPENp;
+    11          {\bf else}
+    12              Continue;
+    13      {\bf else}
+    14          {\bf if} n' \(\notin\) OPENp {\bf then}
+    15              Add n' to OPENp;
+    16          {\bf else if} g1 \(\geq\) g(n') {\bf then}
     17              Continue;
-    18      Set g(n0) = g1;
-    19      Set f(n0) = g(n0) + h(n0);
-    20      Set parent(n0) = n;
-    21  if OPENp = ; or Smallest f(n) value of n 2 OPENp \(\geq\) incumbent.cost then
+    18      Set g(n') = g1;
+    19      Set f(n') = g(n') + h(n');
+    20      Set parent(n') = n;
+    21   {\bf if} OPENp = 0 {\bf or} Smallest f(n) value of n \(\in\) OPENp \(\geq\) incumbent.cost {\bf then}
     22      Continue;
-    23  Get and remove from OPENp a node n with a smallest f(n);
-    24  Add n to CLOSEDp;
-    25  if n is a goal node then
-    26      if path cost from s0 to n < incumbent:cost then
+    23   Get and remove from OPENp a node n with a smallest f(n);
+    24   Add n to CLOSEDp;
+    25   {\bf if} n is a goal node {\bf then}
+    26      {\bf if} path cost from s0 to n < incumbent.cost {\bf then}
     27          incumbent = path from s0 to n;
     28          incumbent.cost = path cost from s0 to n;
-    29  for every successor n0 of n do
-    30      Set g1 = g(n) + c(n; n0);
-    31      Add (n0; g1; n) to BUFFER ComputeRecipient(n);
-    32 if incumbent:cost = 1 then
-    33  Return failure (no path exists);
-    34 else
-    35  Return solution path from s0 to n;
+    29   {\bf for} every successor n' of n {\bf do}
+    30      Set g1 = g(n) + c(n , n');
+    31      Add (n', g1, n) to BUFFER ComputeRecipient(n);
+    32 {\bf if} incumbent.cost = \(\infty\) {\bf then}
+    33    Return failure (no path exists);
+    34 {\bf else}
+    35    Return solution path from s0 to n;
 \end{alltt}
 
 Where
@@ -141,19 +141,19 @@ When a thread sends a message to another one, it signals its condition variable 
 
 \begin{alltt}
     1 lock mutex
-    2 while termination_flags[this_thread] and
-    BUFFER(this_thread) = 0 AND not program_terminated
-    3   if counter \( \geq \) n_threads - 1 AND all buffer empty
-    4       program_terminated = 1
-    5       signal all condition variables
-    6   else
-    7       counter++
-    8       wait on condition variable of this_thread
-    9       counter--
+    2{\bf while} termination_flags[this_thread] {\bf and} BUFFER(this_thread) = 0 {\bf and}
+            not program_terminated {\bf do}
+    3    {\bf if} counter \( \geq \) n_threads - 1 {\bf and} all BUFFER empty {\bf then}
+    4        program_terminated = 1
+    5        signal all condition variables
+    6    {\bf else}
+    7        counter++
+    8        wait on condition variable of this_thread
+    9        counter--
     10 unlock mutex
-    11 if program_terminated
+    11{\bf if} program_terminated {\bf then}
     12   return true
-    13 else
+    13{\bf else}
     14   return false
 \end{alltt}
 
