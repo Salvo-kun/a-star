@@ -1,28 +1,38 @@
-\section{Possible Enhancement}
+\section{Possible Enhancements}
 \label{Sec:enhancement}
 
-Looking at the experimental results (Section \ref{Sec:experimental-eval}) our parallel A* implementation has good performance, 
+Looking at the experimental results (Section \ref{Sec:experimental-eval}), our parallel A* implementation has good performance overall, 
 but we thought about possible enhancements for our algorithm.
 In particular:
 \begin{itemize}
     \item parallelization of graph reading
+    \item balancing multiplicative hash for different number of threads
     \item implementation of abstract zobrist hashing for the compute recipient function
 \end{itemize}
 
-\subsection{Parallel graph reading}
+\subsection{Parallel Graph Reading}
+\label{par_read}
 
-With the current sequential graph reading the time for the graph creation is slower than path finding: for the large map it is up to 70 seconds.
-To improve the performance a possible solution would be parallelizing the graph generation from the input file,
-but we did't find an efficient way to parallelize it at thread level.
+With the current sequential graph reading, the time for the graph creation is slower than path finding: for the large map it can last a couple of minutes.
+To improve the performance, a possible solution would be parallelizing the graph generation from the input file,
+although we don't know if it would be really effective.
 
+\subsection{Multiplicative Hash Balancing}
+\label{balance_mul_hash}
 
-\subsection{Abstract zobrist hashing}
+During the tests on the compute recipient function, we noticed that with certain number of threads we have lower performances even if we expected a different result (Figure \ref{Map-par-comp-lines}).
+A possible reason to this strange behaviour is due to the module operation at the end of our hash functions.
+We tried to normalize the result of the hash between 0 and 1, then multiplying it by the number of threads and taking the floor of the result.
+However, this solution was not as effective as we thought, so we decided to keep the unbalanced version. 
 
-Looking at the experimental tests (Section \ref{Sec:experimental-eval}) we understood the importance of a good hash for the compute recipient function.
-Many scientific papers (eg. \cite{bibParAstar}) explain that the abstract zobrist hashing should have better performances than the multiplicative,
+\subsection{Abstract Zobrist Hashing}
+\label{hash_zobrist}
+
+Looking at the experimental tests (Section \ref{Sec:experimental-eval}), we understood the importance of a good hash for the compute recipient function.
+Many scientific papers (eg. \cite{bibParAstar}) explain that the abstract zobrist hashing should have better performances than the multiplicative one,
 because it can balance better the load of the threads and minimize the communication overhead.
 We tried to implement it achieving poor results and, since it needed to store additional data inside the graph, it penalized 
-other implementation's performances, thus we decided to remove it.
+other implementation's performances, thus we decided not to further explore it.
 
 
 

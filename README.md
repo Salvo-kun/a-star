@@ -1,10 +1,10 @@
 
-# A-Star 
-A* is a C program providing multiple implementations of the famous pathfinding algorithm. 
+# A-Star
+A-Star is a C program providing multiple implementations of the famous pathfinding algorithm. 
 The available versions are:
 - Sequential (standard implementation of the A* algorithm)
 - Parallel (decentralized implementation of the A* algorithm using threads)
-- Dijkstra (implementated as the sequential A* without heuristic)
+- Dijkstra (implemented as the sequential A* without heuristic)
 
 ## Table of Contents
 
@@ -21,17 +21,16 @@ The available versions are:
 The program can be used to find the optimal path (in terms of cost) from a source to a destination node on large graphs.
 
 ## Getting Started
-The program MUST be run on a Linux environment, since it uses the POSIX thread (pthread) libraries.
+The program MUST be compiled and run on a Linux environment, since it uses platform-specific libraries.
 The program receives as input `.txt` files with the following format:
 - first line with the total number of nodes and the type of the graph (0 if undirected, 1 if directed)
 - One line for each node with variable number of fields: node id, additional data (eg. x,y coordinates for 2D grid)
 - Variable number of lines with two fields: start node id, end node id (edge)
 
-A set of different benchmarks are provided inside the project (`.map` files).
-
+A set of different benchmarks are provided inside the project (`.map` files, still to be converted, more on this later).
 
 ## Usage
-The program can be built using `make` command from a linux shell.  
+The program can be built using `make` command from a linux shell.
 To run the program use `./bin/aStar [OPTION...] IN_FILE`
 
 To choose the algorithm use `-a ALGORITHM` where ALGORITHM can be:
@@ -49,9 +48,11 @@ To choose hash function of parallel A* use `-h HASH` where HASH can be:
 - 0 for Module hash
 - 1 for Multiplicative hash (suggested)
 
-To choose the output file use `-o OUTPUT_FILE`, if not specified the default is stdout
+To choose the output file use `-o OUTPUT_FILE`, if not specified the program does not save the path (if any), which is useful for plotting the graph
 
 To choose the number of threads used by the parallel A* use `-t NUMBER_OF_THREADS`
+
+To produce verbose output use `-v` option
 
 Run `./bin/aStar --help` and `./bin/aStar --usage` in the root folder of the project to get additional info about it.
 

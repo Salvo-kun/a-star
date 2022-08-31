@@ -67,3 +67,9 @@ mem-leaks-report.txt
 *.fdb_latexmk
 *.fls
 *.gz
+*.xml
+*.toc
+*.bcf
+
+# test
+test/

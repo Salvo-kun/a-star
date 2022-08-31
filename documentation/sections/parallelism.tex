@@ -1,42 +1,43 @@
-\section{A-Star Implementation}
+\section{A* Algorithms}
 \label{Sec:implementation}
 
-A-Star is a best-first search algorithm based on the use of a heuristic function which estimates the cost from a point to a destination node.
+A* is a best-first search algorithm based on the use of a heuristic function which estimates the cost from a source node to a destination node.
 
-Both implementations are based on two set, the OPEN and the CLOSE one. The first is implemented using a priority queue (our heap \ref{heap}) and contains nodes that have been discovered but not expanded yet, the second with a hash table (\ref{hash_table}) and contains nodes that have been expanded.
+Both parallel and sequential implementations are based on two sets, the OPEN and the CLOSED one. The former is implemented using a priority queue (our heap \ref{heap}) and contains nodes that have been discovered but not expanded yet, the latter is implemented with a hash table (\ref{hash_table}) and contains nodes that have been expanded.
 
-All vertexs contains a link to a parent vertex which is used to keep trace of the path found by the algorithm, at the end the solution is inserted in a stack (\ref{stack}) pushing from the goal node and going backward.
+All nodes contain a link to their parent, if any, which is used to keep track of the path found by the algorithm. At the end, the solution is inserted in a stack (\ref{stack}) pushing from the goal node and going backward, this way we do not need to reverse the path.
+
 
 \subsection{Sequential A*}
 
 Starting from pseudo-code \cite{bibParAstar}
 
 \begin{alltt}
-    1 Initialize OPEN to s_0;
-    2 {\bf while} OPEN \(\neq\) 0 {\bf do}
+    1 Initialize OPEN to \{\(s\sb{0}\)\};
+    2 {\bf while} OPEN \(\neq\) \(\emptyset\) {\bf do}
     3    Get and remove from OPEN a node n with a smallest f(n);
     4    Add n to CLOSED;
     5   {\bf if} n is a goal node {\bf then}
-    6       Return solution path from \(s_0\) to n;
+    6       Return solution path from \(s\sb{0}\) to n;
     7   {\bf for} every successor n' of n {\bf do}
-    8       g_1 = g(n) + c(n, n');
+    8       \(g\sb{1}\) = g(n) + c(n, n');
     9      {\bf if} n' \(\in\) CLOSED {\bf then}
-    10         {\bf if} g_1 < g(n') {\bf then}
+    10         {\bf if} \(g\sb{1}\) < g(n') {\bf then}
     11             Remove n' from CLOSED and add it to OPEN;
     12         {\bf else}
     13             continue;
     14     {\bf else}
     15         {\bf if} n' \(\notin\) OPEN {\bf then}
     16             Add n' to OPEN;
-    17         {\bf else if} g_1 \(\geq\) g(n') {\bf then}
+    17         {\bf else if} \(g\sb{1}\) \(\geq\) g(n') {\bf then}
     18             continue;
-    19     Set g(n') = g_1;
+    19     Set g(n') = \(g\sb{1}\);
     20     Set f(n') = g(n') + h(n');
     21     Set parent(n') = n;
     22 Return failure (no path exists);
 \end{alltt}
 
-Where
+where:
 \begin{itemize}
     \item $s_0$ : is the starting node
     \item $g(n)$ : is the cost of the best known path from $s_0$ to $n$
@@ -44,10 +45,13 @@ Where
     \item $f(n)$ : is the sum $g(n) + h(n)$, used in the OPEN set to calculate the priority
 \end{itemize}
 
+
 \subsection{Parallel A*}
 
-Implementation of the decentralized AStar algorithm, where each thread has its own CLOSED and OPEN set.
-When a thread discovers a neighbouring node it choses the thread that will expand it and sends a message to it.
+Implementation of the decentralized A* algorithm, where each thread has its own CLOSED and OPEN sets.
+When a thread discovers a neighbouring node, it chooses the thread which will expand it and sends a message to it.
+\\
+This version of parallel A* is often referred to as HDA* (Hash Distributed A*).
 \\
 When a thread finds a solution, it compares the cost with the global one and if it is lower, it changes the cost with the new one (the global cost is protected with a lock).
 
@@ -56,44 +60,46 @@ When a thread finds a solution, it compares the cost with the global one and if 
 Starting from pseudo-code \cite{bibParAstar}
 
 \begin{alltt}
-    1 Initialize OPENp for each thread p;
+    1 Initialize \(OPEN\sb{p}\) for each thread p;
     2 Initialize incumbent.cost = \(\infty\);
-    3 Add s0 to OPENComputeRecipient(s0);
+    3 Add \(s\sb{0}\) to \(OPEN\sb{ComputeRecipient(s\sb{0})}\);
     4 In parallel, on each thread p, execute 5-31;
     5 {\bf while} TerminateDetection() {\bf do}
-    6    {\bf while} BUFFERp \(\neq\) 0 {\bf do}
-    7       Get and remove from BUFFERp a triplet (n', g1, n);
-    8       {\bf if} n' \(\in\) CLOSEDp {\bf then}
-    9           {\bf if} g1 < g(n') {\bf then}
-    10              Remove n' from CLOSEDp and add it to OPENp;
+    6    {\bf while} \(BUFFER\sb{p}\) \(\neq\) \(\emptyset\) {\bf do}
+    7       Get and remove from \(BUFFER\sb{p}\) a triplet (n', \(g\sb{1}\), n);
+    8       {\bf if} n' \(\in\) \(CLOSED\sb{p}\) {\bf then}
+    9           {\bf if} \(g\sb{1}\) < g(n') {\bf then}
+    10              Remove n' from \(CLOSED\sb{p}\) and add it to \(OPEN\sb{p}\);
     11          {\bf else}
     12              Continue;
     13      {\bf else}
-    14          {\bf if} n' \(\notin\) OPENp {\bf then}
-    15              Add n' to OPENp;
-    16          {\bf else if} g1 \(\geq\) g(n') {\bf then}
+    14          {\bf if} n' \(\notin\) \(OPEN\sb{p}\) {\bf then}
+    15              Add n' to \(OPEN\sb{p}\);
+    16          {\bf else if} \(g\sb{1}\) \(\geq\) g(n') {\bf then}
     17              Continue;
-    18      Set g(n') = g1;
+    18      Set g(n') = \(g\sb{1}\);
     19      Set f(n') = g(n') + h(n');
     20      Set parent(n') = n;
-    21   {\bf if} OPENp = 0 {\bf or} Smallest f(n) value of n \(\in\) OPENp \(\geq\) incumbent.cost {\bf then}
+    21   {\bf if} \(OPEN\sb{p}\) = \(\emptyset\) {\bf or} Smallest f(n) value of n \(\in\) \(OPEN\sb{p}\) \(\geq\) incumbent.cost {\bf then}
     22      Continue;
-    23   Get and remove from OPENp a node n with a smallest f(n);
-    24   Add n to CLOSEDp;
+    23   Get and remove from \(OPEN\sb{p}\) a node n with a smallest f(n);
+    24   Add n to \(CLOSED\sb{p}\);
     25   {\bf if} n is a goal node {\bf then}
-    26      {\bf if} path cost from s0 to n < incumbent.cost {\bf then}
-    27          incumbent = path from s0 to n;
-    28          incumbent.cost = path cost from s0 to n;
+    26      {\bf if} path cost from \(s\sb{0}\) to n < incumbent.cost {\bf then}
+    27          incumbent = path from \(s\sb{0}\) to n;
+    28          incumbent.cost = path cost from \(s\sb{0}\) to n;
     29   {\bf for} every successor n' of n {\bf do}
-    30      Set g1 = g(n) + c(n , n');
-    31      Add (n', g1, n) to BUFFER ComputeRecipient(n);
+    30      Set \(g\sb{1}\) = g(n) + c(n , n');
+    31      Add (n', \(g\sb{1}\), n) to \(BUFFER\sb{ComputeRecipient(n)}\);
     32 {\bf if} incumbent.cost = \(\infty\) {\bf then}
     33    Return failure (no path exists);
     34 {\bf else}
-    35    Return solution path from s0 to n;
+    35    Return solution path from \(s\sb{0}\) to n;
 \end{alltt}
 
-Where
+\vspace{0.5cm}
+
+where:
 \begin{itemize}
     \item $BUFFER$ : structure used for thread communication (\ref{thread_buf})
     \item $incumbent$ : the shared best known path
@@ -104,44 +110,46 @@ Where
 \subsubsection{Compute recipient}
 \label{compute_reci}
 
-A Function that is able to map the nodeId into a thread identifier, and which is used to decide to which thread send a message to with the node to expand.
+A function which is able to map the node id into a thread identifier, and which is used to decide to which thread send a message to, with the node to be expanded.
 This function can considerably change the performance of the algorithm.
 \\ 
-We provided two different implementation:
+We provided two different implementations:
 \\
-The basic module is the simplest one and it is computed as: \\
+The basic module is the simplest one and it is computed as: 
 \begin{center}
     $node\_id \; \% \;  number\_of\_threads$
 \end{center}
-
-A more efficient function, but still simple to implement, is the multiplicative hashing computed as \cite{bibVideoMulHash}: \\
+A more efficient function is the multiplicative hashing computed as \cite{bibVideoMulHash}:
 \begin{center}
     $ h(node\_id) =((a*node\_id \; + \; b) \; \% \; p) \; \% \; number\_of\_threads $  
-    \\ 
-    where:
-    \begin{itemize}
-        \item $p$: large prime number (we used INT\_MAX =  $ 2^{31}-1 $)
-        \item $a$: random integer [1,p-1]
-        \item $b$: random integer [0,p-1]
-    \end{itemize}
 \end{center}
-
+where:
+\begin{itemize}
+    \item $p$: large prime number (we used INT\_MAX =  $ 2^{31}-1 $)
+    \item $a$: random integer [1,p-1]
+    \item $b$: random integer [0,p-1]
+\end{itemize}
+There are other well known hash functions suitable for parallel A* (see \ref{hash_zobrist}), but we did not implement them.
 
 \subsubsection{Thread communication}
 \label{thread_buf}
 
-A message queue (\ref{message_queue}) structure is used to allows threads to communicate: a thread computes the recipient and sends a message using the thread destination with the node and cost. 
+A message queue (\ref{message_queue}) structure is used to allow threads to communicate: a thread computes the recipient and sends a message using the thread id as recipient with the nodes of the edge and the cost. 
 
-\subsubsection{Terminate condition}
+\subsubsection{Terminate Condition}
 \label{terminate}
 
+We implemented a custom terminate detection, starting from the idea of the "sum flags" method (mentioned in the paper "Parallel A* Graph Search", \cite{bibCustomTerm}), also exploiting our data structures.
+\\
 When a thread has its OPEN set empty or there aren't any elements that will improve the cost of the path, it sets its termination\_flag.
-A thread waits on its condition variable only if it has no message pending and its termination\_flag is set, if all other threads are waiting the program terminates instead.
+\\
+A thread waits on its condition variable only if it has no message pending and its termination\_flag is set. If all threads are waiting, the program terminates.
+\\
 When a thread sends a message to another one, it signals its condition variable in order to wake it up.
 
 \begin{alltt}
     1 lock mutex
-    2{\bf while} termination_flags[this_thread] {\bf and} BUFFER(this_thread) = 0 {\bf and}
+    2{\bf while} termination_flags[this_thread] {\bf and} \(BUFFER\sb{(this_thread)}\) = \(\emptyset\) {\bf and}
             not program_terminated {\bf do}
     3    {\bf if} counter \( \geq \) n_threads - 1 {\bf and} all BUFFER empty {\bf then}
     4        program_terminated = 1
@@ -157,12 +165,12 @@ When a thread sends a message to another one, it signals its condition variable 
     14   return false
 \end{alltt}
 
-Where
+where:
 \begin{itemize}
-    \item $termination\_flags$: array of flags set by a thread when the OPEN set is empty or does not have any node with a minor cost then the actual path
+    \item $termination\_flags$: array of flags set by a thread when the OPEN set is empty or it does not have any node with a minor cost then the actual path
     \item $program\_terminated$: flag set by last thread awake when it detects the termination of the program
     \item $counter$: counter of sleeping threads
-    \item $mutex$: global mutex to protect all condition variables
+    \item $mutex$: global mutex to protect all shared resources
     \item $BUFFER$: message queue of each thread
 \end{itemize}
 
