@@ -187,6 +187,7 @@ int main(int argc, char **argv)
 
   uint64_t tg = nano_count();
   g = graph_create(arguments.args[0], readData);
+  util_check_r(g != NULL, "Could not create graph!", 7);
   tg = nano_count() - tg;
 
   if (arguments.verbose)
@@ -197,12 +198,12 @@ int main(int argc, char **argv)
   fprintf(stdout, "Enter source node id: ");
   fscanf(stdin, "%d", &srcId);
   graph_find(g, srcId, src);
-  util_check_r(*src != NULL, "Source node not found!", 7);
+  util_check_r(*src != NULL, "Source node not found!", 8);
 
   fprintf(stdout, "Enter destination node id: ");
   fscanf(stdin, "%d", &dstId);
   graph_find(g, dstId, dst);
-  util_check_r(*dst != NULL, "Destination node not found!", 8);
+  util_check_r(*dst != NULL, "Destination node not found!", 9);
 
   uint64_t t = nano_count();
 
@@ -255,7 +256,7 @@ int main(int argc, char **argv)
     hash_destroy(hash_data);
 
   if (arguments.outfile)
-    fclose(outstream);
+    fclose(outfile);
 
   return 0;
 }
