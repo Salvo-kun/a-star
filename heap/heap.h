@@ -47,10 +47,10 @@ extern int heap_count(heap_t *heap);
 extern int heap_extract(heap_t *heap, void **data, int *key);
 
 /*
-  Updates an entry of the heap, given its key.
+  Updates an entry of the heap, given its key, eventually freeing also the old data (if freeData is not NULL).
   Returns 0 if an error occurs, 1 otherwise.
 */
-extern int heap_update(heap_t *heap, int key, int newPriority);
+extern int heap_update(heap_t *heap, int key, int newPriority, void (*freeData)(void *));
 
 /*
   Frees the allocated memory for the given heap, eventually freeing also the contained data (if freeData is not NULL).

@@ -5,6 +5,7 @@
 graph_t *graph_create(char *filename, void *(*readData)(char *, int *))
 {
   graph_t *graph;
+  vertex_t **src, **dst;
   char line[MAX_LINE];
   int i, j, weight;
   FILE *fp;
@@ -50,6 +51,12 @@ graph_t *graph_create(char *filename, void *(*readData)(char *, int *))
     hash_table_insert(graph->nodes_map, id, (void *)graph->head);
   }
 
+  src = (vertex_t **)util_malloc(sizeof(vertex_t *));
+  util_check_r(src != NULL, "Could not allocate src.", 0);
+
+  dst = (vertex_t **)util_malloc(sizeof(vertex_t *));
+  util_check_r(dst != NULL, "Could not allocate dst.", 0);
+
   // Create edges
   while (fgets(line, MAX_LINE, fp) != NULL)
   {
@@ -57,25 +64,19 @@ graph_t *graph_create(char *filename, void *(*readData)(char *, int *))
     util_check_r(sscanf(line, "%d%d%d", &i, &j, &weight) == 3, "Edge line has wrong format, returning...\n", NULL);
 
     // Create edge
-    vertex_t *src, *dst;
-
-    src = (vertex_t *)util_malloc(sizeof(vertex_t));
-    util_check_r(src != NULL, "Could not allocate src.", 0);
-
-    dst = (vertex_t *)util_malloc(sizeof(vertex_t));
-    util_check_r(dst != NULL, "Could not allocate dst.", 0);
-
-    graph_find(graph, i, &src);
-    graph_find(graph, j, &dst);
-    new_edge(graph, src, dst, weight);
+    graph_find(graph, i, src);
+    graph_find(graph, j, dst);
+    new_edge(graph, *src, *dst, weight);
 
     // If undirected, create also reverse direction edge
     if (graph->type == UNDIRECTED)
     {
-      new_edge(graph, dst, src, weight);
+      new_edge(graph, *dst, *src, weight);
     }
   }
 
+  free(src);
+  free(dst);
   fclose(fp);
 
   return graph;
@@ -173,6 +174,7 @@ vertex_t *new_node(vertex_t *next, int id, void *data)
 
   v = (vertex_t *)util_malloc(1 * sizeof(vertex_t));
   v->id = id;
+  v->visited = 0;
   v->true_cost = 0;
   v->heuristic_cost = 0;
   v->data = data;

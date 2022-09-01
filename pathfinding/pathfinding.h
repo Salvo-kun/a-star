@@ -7,6 +7,7 @@
 #include "../stack/stack.h"
 #include "../hash_table/hash_table.h"
 #include "../graph/graph.h"
+#include "../graph/hash.h"
 
 // Data structures declaration
 
@@ -45,6 +46,7 @@ extern int seq_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*h
 
 /*
   Finds path from source to destination in the given graph, using an external heuristic function paralelizing it using n_threads_to_use threads.
+  An input hash structure contains the hash function to be used to exchange data between threads.
   If heuristic overestimates the true cost, the path could not be the minimum cost one, otherwise it is guaranteed the path has minimum cost.
   The path is returned through an input parameter, and it contains:
     - the number of nodes in the path
@@ -54,6 +56,6 @@ extern int seq_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*h
   Returns 0 if an error occurs, 1 otherwise.
 */
 
-extern int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristic)(vertex_t *, vertex_t *), path_t **path, int n_threads_to_use);
+extern int par_a_star_path(graph_t *graph, vertex_t *src, vertex_t *dst, int (*heuristic)(vertex_t *, vertex_t *), path_t **path, int n_threads_to_use, hash_t *hash_data);
 
 #endif

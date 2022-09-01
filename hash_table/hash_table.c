@@ -69,7 +69,7 @@ int hash_table_get(hash_table_t *hash_table, int key, void **data)
 }
 
 int hash_table_insert(hash_table_t *hash_table, int key, void *data)
-{  
+{
     // Check hash_table and internal array are not null before starting
     util_check_r(hash_table != NULL, "hash_table cannot be null, returning...\n", 0);
     util_check_r(hash_table->nodes != NULL, "hash_table nodes cannot be null, returning...\n", 0);
@@ -131,10 +131,9 @@ int hash_table_insert(hash_table_t *hash_table, int key, void *data)
     return 1;
 }
 
-int hash_table_update(hash_table_t *hash_table, int key, void *data)
+int hash_table_update(hash_table_t *hash_table, int key, void *data, void (*freeData)(void *))
 {
     link_t current;
-    int found = 0;
 
     // Check hash_table and internal array are not null before starting
     util_check_r(hash_table != NULL, "hash_table cannot be null, returning...\n", 0);
@@ -149,26 +148,34 @@ int hash_table_update(hash_table_t *hash_table, int key, void *data)
         if (current->key == key)
         {
             // Node found, update data
-            found = 1;
+
+            if (freeData != NULL)
+            {
+                freeData(current->data);
+            }
+
             current->data = data;
 
-            break;
+#if DEBUG_HASH
+            fprintf(stdout, "Node with key %d updated...\n", key);
+#endif
+
+            return 1;
         }
 
         current = current->next;
     }
 
 #if DEBUG_HASH
-    fprintf(stdout, "Node with key %d %s...\n", key, found ? "updated" : "not found");
+    fprintf(stdout, "Node with key %d not found...\n", key);
 #endif
 
     return 1;
 }
 
-int hash_table_delete(hash_table_t *hash_table, int key)
+int hash_table_delete(hash_table_t *hash_table, int key, void (*freeData)(void *))
 {
     link_t previous, current;
-    int found = 0;
 
     // Check hash_table and internal array are not null before starting
     util_check_r(hash_table != NULL, "hash_table cannot be null, returning...\n", 0);
@@ -184,16 +191,24 @@ int hash_table_delete(hash_table_t *hash_table, int key)
         if (current->key == key)
         {
             // Node found
-            found = 1;
             if (previous != NULL)
                 previous->next = current->next;
             else
                 hash_table->nodes[bucket] = current->next;
 
             // Free deleted node
+            if (freeData != NULL)
+            {
+                freeData(current->data);
+            }
+
             free(current);
 
-            break;
+#if DEBUG_HASH
+            fprintf(stdout, "Node with key %d deleted...\n", key);
+#endif
+
+            return 1;
         }
 
         previous = current;
@@ -203,7 +218,7 @@ int hash_table_delete(hash_table_t *hash_table, int key)
     hash_table->count--;
 
 #if DEBUG_HASH
-    fprintf(stdout, "Node with key %d %s...\n", key, found ? "deleted" : "not found");
+    fprintf(stdout, "Node with key %d not found...\n", key);
 #endif
 
     return 1;

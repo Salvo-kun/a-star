@@ -3,6 +3,7 @@
 #include <math.h>
 #include "../pathfinding.h"
 #include "../../graph/graph.h"
+#include "../../graph/hash.h"
 
 typedef struct coord_2d_s coord_2d_t;
 
@@ -51,7 +52,7 @@ int main(int argc, char **argv)
 
 int heuristic(vertex_t *a, vertex_t *b)
 {
-    //fprintf(stdout, "Start (%d) %d %d, End (%d) %d %d\n", a->id, ((coord_2d_t *)a->data)->x, ((coord_2d_t *)a->data)->y, b->id, ((coord_2d_t *)b->data)->x, ((coord_2d_t *)b->data)->y);
+    // fprintf(stdout, "Start (%d) %d %d, End (%d) %d %d\n", a->id, ((coord_2d_t *)a->data)->x, ((coord_2d_t *)a->data)->y, b->id, ((coord_2d_t *)b->data)->x, ((coord_2d_t *)b->data)->y);
     return abs(((coord_2d_t *)a->data)->x - ((coord_2d_t *)b->data)->x) + abs(((coord_2d_t *)a->data)->y - ((coord_2d_t *)b->data)->y);
 }
 
@@ -86,33 +87,40 @@ void djikstraTest(char *filename, int srcId, int dstId, void *(*readData)(char *
     path = (path_t *)util_malloc(sizeof(path_t));
     util_check_no_r(path != NULL, "Could not allocate path.");
 
+    uint64_t tg = nano_count();
     g = graph_create(filename, readData == NULL ? NULL : readData);
+    tg = nano_count() - tg;
+    fprintf(stdout, "Graph created in %f seconds\n", NS_TO_S(tg));
 
     // graph_stats(stdout, g, NULL);
 
     graph_find(g, srcId, &src);
     graph_find(g, dstId, &dst);
 
-    fprintf(stdout, "Source: %d\n", src->id);
-    fprintf(stdout, "Destination: %d\n", dst->id);
+    // fprintf(stdout, "Source: %d\n", src->id);
+    // fprintf(stdout, "Destination: %d\n", dst->id);
 
     fprintf(stdout, "DJIKSTRA\n\n");
 
+    uint64_t t = nano_count();
+
     seq_djikstra_path(g, src, dst, &path);
+
+    t = nano_count() - t;
 
     if (path != NULL)
     {
-        fprintf(stdout, "\nFound path with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
+        fprintf(stdout, "\nFound path in %f seconds with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", NS_TO_S(t), path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
 
         while (!stack_empty_m(path->nodes))
         {
             int *id;
 
             stack_pop(path->nodes, (void **)&id);
-            fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
+            //fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
         }
 
-        fprintf(stdout, "\n");
+        // fprintf(stdout, "\n");
     }
     else
     {
@@ -140,33 +148,40 @@ void astarTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_t *
     path = (path_t *)util_malloc(sizeof(path_t));
     util_check_no_r(path != NULL, "Could not allocate path.");
 
+    uint64_t tg = nano_count();
     g = graph_create(filename, readData == NULL ? NULL : readData);
+    tg = nano_count() - tg;
+    fprintf(stdout, "Graph created in %f seconds\n", NS_TO_S(tg));
 
     // graph_stats(stdout, g, NULL);
 
     graph_find(g, srcId, &src);
     graph_find(g, dstId, &dst);
 
-    fprintf(stdout, "Source: %d\n", src->id);
-    fprintf(stdout, "Destination: %d\n", dst->id);
+    // fprintf(stdout, "Source: %d\n", src->id);
+    // fprintf(stdout, "Destination: %d\n", dst->id);
 
     fprintf(stdout, "A*\n\n");
 
+    uint64_t t = nano_count();
+
     seq_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path);
+
+    t = nano_count() - t;
 
     if (path != NULL)
     {
-        fprintf(stdout, "\nFound path with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
+        fprintf(stdout, "\nFound path in %f seconds with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", NS_TO_S(t), path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
 
         while (!stack_empty_m(path->nodes))
         {
             int *id;
 
             stack_pop(path->nodes, (void **)&id);
-            fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
+            //fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
         }
 
-        fprintf(stdout, "\n");
+        //fprintf(stdout, "\n");
     }
     else
     {
@@ -194,33 +209,43 @@ void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_
     path = (path_t *)util_malloc(sizeof(path_t));
     util_check_no_r(path != NULL, "Could not allocate path.");
 
+    uint64_t tg = nano_count();
     g = graph_create(filename, readData == NULL ? NULL : readData);
+    tg = nano_count() - tg;
+    fprintf(stdout, "Graph created in %f seconds\n", NS_TO_S(tg));
 
     // graph_stats(stdout, g, NULL);
 
     graph_find(g, srcId, &src);
     graph_find(g, dstId, &dst);
 
-    fprintf(stdout, "Source: %d\n", src->id);
-    fprintf(stdout, "Destination: %d\n", dst->id);
+    //fprintf(stdout, "Source: %d\n", src->id);
+    //fprintf(stdout, "Destination: %d\n", dst->id);
 
-    fprintf(stdout, "A*\n\n");
+    fprintf(stdout, "PAR A*\n\n");
 
-    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, 6);
+    uint64_t t = nano_count();
+
+    int numThreads = 4;
+    hash_t *hash_data = choose_hash(MULTIPLICATIVE, numThreads);
+
+    par_a_star_path(g, src, dst, heuristic == NULL ? NULL : heuristic, &path, numThreads, hash_data);
+
+    t = nano_count() - t;
 
     if (path != NULL)
     {
-        fprintf(stdout, "\nFound path with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
+        fprintf(stdout, "\nFound path in %f seconds with cost = %d and length = %d. Visited nodes = %d\tRevisited nodes = %d\n", NS_TO_S(t), path->cost, stack_count(path->nodes) - 1, path->visited_nodes, path->revisited_nodes);
 
         while (!stack_empty_m(path->nodes))
         {
             int *id;
 
             stack_pop(path->nodes, (void **)&id);
-            fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
+            //fprintf(stdout, "%d%s", *id, stack_empty_m(path->nodes) ? "" : ", ");
         }
 
-        fprintf(stdout, "\n");
+        // fprintf(stdout, "\n");
     }
     else
     {
@@ -229,6 +254,7 @@ void astarParTest(char *filename, int srcId, int dstId, int (*heuristic)(vertex_
 
     graph_destroy(g, readData == NULL ? NULL : free);
     free(path);
+    hash_destroy(hash_data);
 
     fprintf(stdout, "\n\n");
 }
@@ -243,8 +269,8 @@ void smallGraphTest(char *filename, int srcId, int dstId)
 void cityGraphTest(char *filename, int srcId, int dstId)
 {
     // djikstraTest(filename, srcId, dstId, read_2d_data);
-    // fprintf(stdout, "\n-------------------------\n");
-    // astarTest(filename, srcId, dstId, heuristic, read_2d_data);
-    // fprintf(stdout, "\n-------------------------\n");
+    fprintf(stdout, "\n-------------------------\n");
+    astarTest(filename, srcId, dstId, heuristic, read_2d_data);
+    fprintf(stdout, "\n-------------------------\n");
     astarParTest(filename, srcId, dstId, heuristic, read_2d_data);
 }

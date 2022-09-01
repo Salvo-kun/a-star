@@ -35,6 +35,7 @@ struct vertex_s
 {
   int id;
   int true_cost;
+  int visited;
   int heuristic_cost;
   void *data;
   vertex_t *parent;

@@ -1,0 +1,53 @@
+\section{Basic structures}
+\label{Sec:basic_structures}
+
+The project started by implementing all the basic structures needed by the algorithm, which are as generic as possible to encourage reuse and are dynamically allocated and implemented using lists to have no static limitations.
+\\
+Each structure has a create function for allocation and a destroy one for disallocation of the memory.
+
+\subsection{Hash table}
+\label{hash_table}
+
+It does not allow duplicate keys and it uses multiplicative modular method with golden ratio:
+
+\begin{equation}
+    golden\_ratio = \frac{(\sqrt{5} - 1)}{2}
+\end{equation}
+\begin{equation}
+    P = 8191
+\end{equation}
+\begin{equation}
+    hash(key, module) = ((key*golden\_ratio)\%P)\%module
+\end{equation}
+The structure re-allocates itself when it reaches 75\% of the maximum capacity. In case of collisions, it concatenates the elements in a list (keeps in the first place the last inserted item, exploiting the locality principle).
+
+
+
+\subsection{Heap}
+\label{heap}
+
+It is used as a priority queue, with the possibility to have MAX or MIN priority, and it uses a hash table for faster addressing and as a support for changing priorities.
+It has a lower and upper threshold for reallocation.
+
+
+\subsection{Queue}
+
+Generic list with head and tail pointers to an item. FIFO queue with head extraction and tail insertion.
+
+\subsection{Stack}
+\label{stack}
+
+LIFO implementation with both insertion and extraction occurring on the head.
+
+\subsection{Graph}
+
+Generic graph with the possibility to be UNDIRECTED or DIRECTED. It has a pointer to a generic data structure (useful when creating the graph from different domains such as 2D or 3D maps). A custom function can be passed as a parameter to properly read all the additional data. \\
+Each vertex has a true\_cost, which is the cost of the path from the start to that specific vertex, and a heuristic\_cost, an estimation of the cost from that node to the destination node.
+The graph also contains a hash table of all the nodes used to search efficiently (a good improvement in the graph generation).
+
+\subsection{Message queue}
+\label{message_queue}
+
+It is composed by an array of queues, with customizable length.
+The receive and send methods are protected by a mutex to avoid race conditions, and they accept an id as parameter to send/receive a message to/from a specific queue. 
+It also has a function to check if all the queues are empty, which is used in the parallel A* algorithm for the terminate detection.

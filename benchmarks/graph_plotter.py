@@ -23,7 +23,7 @@ if __name__ == '__main__':
             
         for i in f.readlines():
             if len(i.strip()) != 0:
-                line = list(map(lambda c: 0 if c == '.' else 1, i.strip()))
+                line = list(map(lambda c: 1 if c in ['G', '@'] else 0, i.strip()))
                 lines.append(line)
         a = np.array(lines)
         
@@ -33,20 +33,12 @@ if __name__ == '__main__':
     for val,node in zip(a.ravel(), sorted(G.nodes())):
         if val!=0:
             G.remove_node(node)
-            
-    # nx.set_edge_attributes(G, {e: 1 for e in G.edges()}, "cost")
-    # def dist(a, b):
-    #     (x1, y1) = a
-    #     (x2, y2) = b
-    #     return ((x1 - x2) ** 2 + (y1 - y2) ** 2) ** 0.5
-    # print(nx.astar_path(G, (485, 107), (32, 33), heuristic=dist, weight="cost"))
     
     print(f'Elapsed {time.time() - t} seconds loading graph')
     t = time.time()
 
-    path = [
-        
-    ]
+    with open(sys.argv[4]) as f:
+        path = list(map(int,f.read().splitlines()))
     
     a = a.flatten()
     a[path] = 2
@@ -57,13 +49,13 @@ if __name__ == '__main__':
     
     dpi = 1000
     cMap = cols.ListedColormap(['w', 'silver', 'r'])
-    plt.figure()
+    plt.figure(dpi=dpi)
     plt.pcolormesh(a, cmap=cMap)
     plt.gca().set_aspect('equal') #set the x and y axes to the same scale
     plt.xticks([]) # remove the tick marks by setting to an empty list
     plt.yticks([]) # remove the tick marks by setting to an empty list
     plt.gca().invert_yaxis() #invert the y-axis so the first row of data is at the top
     plt.savefig(sys.argv[2], dpi=dpi)
-    # plt.show()
+    plt.show()
     
     print(f'Elapsed {time.time() - t} seconds saving image')

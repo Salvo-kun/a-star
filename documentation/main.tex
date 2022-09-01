@@ -1,0 +1,57 @@
+\documentclass{article}
+
+\usepackage{graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{tabularx}
+\usepackage{alltt}
+\usepackage{biblatex}
+\usepackage{caption}
+
+\usepackage[a4paper,total={6in, 8in}]{geometry}
+
+\addbibresource{references.bib}
+
+\graphicspath{{assets/}}
+
+\newcolumntype{M}[1]{>{\centering\arraybackslash}m{#1}}
+\newcommand{\IBS}[1] {\footnote{Itzik: #1}}
+
+\begin{document}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TITLE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{A*: Analysis and Comparison}
+
+
+\author{
+    Salvatore Licata \\
+    Lorenzo Ferro \\
+    Alessandro Zamparutti
+    }
+    
+    \date{
+    August 2022
+    }
+    
+    \maketitle
+    
+    \tableofcontents
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Sections %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+\input{sections/intro.tex}
+\input{sections/reading.tex}
+\input{sections/basic_structures.tex}
+\newpage
+\input{sections/parallelism.tex}
+\newpage
+\input{sections/experimental_evaluation.tex}
+\newpage
+\input{sections/pos_enhancement.tex}
+
+\newpage
+
+\nocite{*}
+\printbibliography
+
+\end{document}
+

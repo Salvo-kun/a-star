@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 /* macro definition */
 #define util_check_m(expr, msg)          \
@@ -46,4 +47,5 @@ extern void util_array_dispose(void **ptr, unsigned int n, void (*quit)(void *))
 extern void **util_matrix_alloc(unsigned int n, unsigned int m, unsigned int size);
 extern void util_matrix_dispose(void ***ptr, unsigned int n, unsigned int m, void (*quit)(void *));
 extern uint64_t nano_count();
+extern unsigned int get_rand();
 #endif

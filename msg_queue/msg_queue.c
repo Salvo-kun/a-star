@@ -102,7 +102,10 @@ int message_queue_destroy(message_queue_t *msg_q, void (*freeData)(void *))
             queue_destroy(msg_q->queue_list[i], freeData);
 
         if (msg_q->mutex_list[i] != NULL)
+        {
             pthread_mutex_destroy(msg_q->mutex_list[i]);
+            free(msg_q->mutex_list[i]);
+        }
     }
 
     free(msg_q->mutex_list);

@@ -58,3 +58,18 @@ bin/
 
 # Log files
 *.log
+mem-leaks-report.txt
+
+# LaTeX Doc
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.gz
+*.xml
+*.toc
+*.bcf
+
+# test
+test/
