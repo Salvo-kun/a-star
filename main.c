@@ -66,7 +66,7 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state)
   case 'e':
     arguments->heuristic = atoi(arg);
     break;
-  case 'f':
+  case 'h':
     arguments->hash = atoi(arg);
     break;
   case 'o':
@@ -151,6 +151,9 @@ int main(int argc, char **argv)
     fprintf(outstream, "IN_FILE = %s\n", arguments.args[0]);
     fprintf(outstream, "---------------------------------------------------- \n");
   }
+
+  // Validate algorithm
+  util_check_r(arguments.algorithm >= 0 && arguments.algorithm <= 2, "Choose a valid algorithm!", 10);
 
   // Choose domain's data reading strategy
   void *(*readData)(char *, int *) = choose_domain_reader(arguments.domain);
