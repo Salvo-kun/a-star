@@ -152,8 +152,9 @@ int main(int argc, char **argv)
     fprintf(outstream, "---------------------------------------------------- \n");
   }
 
-  // Validate algorithm
+  // Validate data
   util_check_r(arguments.algorithm >= 0 && arguments.algorithm <= 2, "Choose a valid algorithm!", 10);
+  util_check_r(arguments.numThreads >= 1, "Choose a valid number of threads!", 11);
 
   // Choose domain's data reading strategy
   void *(*readData)(char *, int *) = choose_domain_reader(arguments.domain);
